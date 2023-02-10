@@ -567,13 +567,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
   {
     				UBPressed=1;
+		//state++;
+		//if state >2 {state = do nothing};
 	}
 	
 	
 	if(GPIO_Pin == GPIO_PIN_1)
   {
 			extern_UBPressed=1;
+		//state =0;
 	}
+	
+	// if state 0
+	// if state 1
+	// if state 2
  
 }
 
