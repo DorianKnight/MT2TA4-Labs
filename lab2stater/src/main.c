@@ -96,6 +96,7 @@ uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
 
 uint8_t currState = 0; //Indicates the current state of the FSM
+uint8_t scoreDisplayed = 0; //Allows me to understand if I displayed the score yet
 
 
 
@@ -200,10 +201,10 @@ int main(void)
 	BSP_LCD_SetBackColor(LCD_COLOR_LIGHTGRAY);
 	
 		
-	LCD_DisplayString(1, 5, (uint8_t *)"abcdefghijklmnopQRSTUVWXYZ");
-	LCD_DisplayString(5, 2, (uint8_t *)"MT3TA4 Lab2 ");
-	LCD_DisplayInt(7, 6, 123456789);
-	LCD_DisplayFloat(8, 6, 12.3456789, 4);
+	//LCD_DisplayString(1, 5, (uint8_t *)"abcdefghijklmnopQRSTUVWXYZ");
+	//LCD_DisplayString(5, 2, (uint8_t *)"MT3TA4 Lab2 ");
+	//LCD_DisplayInt(7, 6, 123456789);
+	//LCD_DisplayFloat(8, 6, 12.3456789, 4);
 
 
  //**************test random number *********************
@@ -223,9 +224,9 @@ int main(void)
 												
 	if (Hal_status==HAL_ERROR || Hal_status==HAL_TIMEOUT) // a new rng was NOT generated sucessfully;
 		 random=1000; // millisecond	
-	LCD_DisplayString(9, 0, (uint8_t *)"random:");
-	LCD_DisplayString(9, 8, (uint8_t *)"         ");
-	LCD_DisplayInt(9, 8, random);
+	//LCD_DisplayString(9, 0, (uint8_t *)"random:");
+	//LCD_DisplayString(9, 8, (uint8_t *)"         ");
+	//LCD_DisplayInt(9, 8, random);
 
 	
 	
@@ -234,37 +235,31 @@ int main(void)
 
 //Unlock the Flash Program Erase controller 
 	HAL_FLASH_Unlock();
-	LCD_DisplayInt(10, 1, 1);	  //!!!!!the 1, 2, 3, 4 printed here is for debuging.....to check 		
+	//LCD_DisplayInt(10, 1, 1);	  //!!!!!the 1, 2, 3, 4 printed here is for debuging.....to check 		
 	
 // EEPROM Init 
 	EE_Init();
-	LCD_DisplayInt(10, 4, 2);
+	//LCD_DisplayInt(10, 4, 2);
  	
 	//test EEPROM----
 	//EE_WriteVariable(VirtAddVarTab[0], 300);
-	LCD_DisplayInt(10, 7, 3);
+	//LCD_DisplayInt(10, 7, 3);
 	
 	EE_ReadVariable(VirtAddVarTab[0], &EEREAD);	
-	LCD_DisplayInt(10, 10, 4);
+	//LCD_DisplayInt(10, 10, 4);
 
-	LCD_DisplayString(11,0,(uint8_t *)"EE READ:");
-	LCD_DisplayString(11,9,(uint8_t *)"     ");	
-	LCD_DisplayInt(11, 9, EEREAD);		
+	//LCD_DisplayString(11,0,(uint8_t *)"EE READ:");
+	//LCD_DisplayString(11,9,(uint8_t *)"     ");	
+	//LCD_DisplayInt(11, 9, EEREAD);		
 
+	//Go to FSM initial state
+	ResetState();
  
   /* Infinite loop */
   while (1)
 	{	
 		//do nothing 
-		 if (UBPressed==1) 
-		 {
-			//BSP_LED_On(LED4); 
-		 }
-		
-		
   }
-	
-	
 }  
 
 /**
@@ -604,28 +599,37 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	if(GPIO_Pin == GPIO_PIN_1)
   {
-			extern_UBPressed=1;
-			currState = 0; //Go back to the starting state
+		extern_UBPressed=1;
+		currState = 0; 
+		
+		//Clear screen
+		BSP_LCD_ClearStringLine(0);
+		BSP_LCD_ClearStringLine(1);
+		BSP_LCD_ClearStringLine(2);
+		BSP_LCD_ClearStringLine(3);
+		BSP_LCD_ClearStringLine(4);
+		BSP_LCD_ClearStringLine(5);
+		BSP_LCD_ClearStringLine(6);
+		BSP_LCD_ClearStringLine(7);
+		BSP_LCD_ClearStringLine(8);
+		BSP_LCD_ClearStringLine(9);
+		BSP_LCD_ClearStringLine(10);
+		BSP_LCD_ClearStringLine(11);
+		BSP_LCD_ClearStringLine(12);
+		BSP_LCD_ClearStringLine(13);
+		BSP_LCD_ClearStringLine(14);
+		BSP_LCD_ClearStringLine(15);		
+		ResetState(); //Go back to the starting state
 	}
 	
 	//States are held within the external interrupt callback so that a state change only occurs when a button is pressed
 	
-	if (currState == 0)
-	{
-		ResetState();
-	}
-	
-	else if (currState == 1)
+	if (currState == 1)
 	{
 		WaitState();
 	}
 	
-	else if (currState == 2)
-	{
-		ReactionState();
-	}
- 
-	else
+	else if (currState == 3 && !scoreDisplayed)
 	{
 		ScoreState(cheat);
 	}
@@ -633,8 +637,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void ResetState()
 {
-	//Flashes red and green lights at a period of 500ms
+	BSP_LCD_SetBackColor(LCD_COLOR_CYAN); //Fills in empty text spaces with colour
+	LCD_DisplayString(1, 2, (uint8_t *)"MT2TA4 Lab2 ");
+	LCD_DisplayString(4, 2, (uint8_t *)"Reaction Test");
+	LCD_DisplayString(6, 0, (uint8_t *)"Push blue button to start");
 	
+	LCD_DisplayString(9, 1, (uint8_t *)"Don't cheat :)");
 }
 
 void WaitState()
@@ -643,10 +651,22 @@ void WaitState()
 	BSP_LED_Off(LED3);
 	BSP_LED_Off(LED4);
 	
+	//Clear screen
+	BSP_LCD_ClearStringLine(1); 
+	BSP_LCD_ClearStringLine(4);
+	BSP_LCD_ClearStringLine(6);
+	BSP_LCD_ClearStringLine(7);
+	BSP_LCD_ClearStringLine(9);
+	
+	//Display message to screen
+	LCD_DisplayString(8, 6, (uint8_t *)"WAIT");
+	
+	
 	//Initalizes the hardware delay
 	
 	//Generate the random number
 	Hal_status = HAL_RNG_GenerateRandomNumber(&Rng_Handle, &random);
+	
 	//Take the last 11 bits (up to 2047)
 	random &= 0x000007FF;
 	__HAL_TIM_SET_COUNTER(&Tim4_Handle, 0x0000); //Clear the counter
@@ -663,26 +683,27 @@ void ReactionState()
 	//Reseting the cheat flag
 	cheat = 0;
 	
-	//Timer counter is cleared after the if statement in the OC function
+	//Clear screen
+	BSP_LCD_ClearStringLine(8); 
+	
+	//Tell user to push button
+	LCD_DisplayString(9, 7, (uint8_t *)"GO!");
 }
 
 void ScoreState(uint8_t cheat)
 {
+	//Set displayed score flag to true
+	scoreDisplayed = 1;
+	//Clear screen
+	BSP_LCD_ClearStringLine(8);
+	BSP_LCD_ClearStringLine(9); 
+	
 	//Turn off the LEDs
 	BSP_LED_Off(LED3);
 	BSP_LED_Off(LED4);
 	
 	//Save current OC_Count (this is the reaction time in milliseconds)
 	uint32_t reactionTime = OC_Count;
-	
-	
-	
-	
-	//Updates EEPROM saved time if new time is faster
-	
-	//Display the reaction time on screen
-	LCD_DisplayString(12,1,(uint8_t *)"Reaction time ");
-	
 	
 	if (!cheat)
 	{
@@ -697,20 +718,18 @@ void ScoreState(uint8_t cheat)
 			
 		}
 		
-		LCD_DisplayInt(13, 1, reactionTime);
-		LCD_DisplayString(14,1,(uint8_t *)"Fastest time ");
-		LCD_DisplayString(13,4, (uint8_t *)"ms");
-		LCD_DisplayInt(15,1, fastestTime);
-		LCD_DisplayString(15,4, (uint8_t *)"ms");
+		LCD_DisplayString(5,2,(uint8_t *)"Reaction time ");
+		LCD_DisplayInt(6, 4, reactionTime);
+		LCD_DisplayString(7,2,(uint8_t *)"Fastest time ");
+		LCD_DisplayString(6,7, (uint8_t *)"ms");
+		LCD_DisplayInt(8,4, fastestTime);
+		LCD_DisplayString(8,7, (uint8_t *)"ms");
 	}
 	
 	else
 	{
-		LCD_DisplayString(13,1, (uint8_t *)"You cheated :(");
+		LCD_DisplayString(7,1, (uint8_t *)"You cheated :(");
 	}
-	
-	
-	
 }
 
 
