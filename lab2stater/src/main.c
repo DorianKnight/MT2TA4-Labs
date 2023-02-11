@@ -90,7 +90,6 @@ char lcd_buffer[14];    // LCD display buffer
 RNG_HandleTypeDef Rng_Handle;
 uint32_t random;
 uint32_t randomDelay;
-uint8_t cheat = 0;
 
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
@@ -119,7 +118,7 @@ static void EXTILine1_Config(void); // configure the exti line1, for exterrnal b
 void ResetState(void); //Starting state
 void WaitState(void); //Causes the unpredictable delay leading into state one
 void ReactionState(void); //Runs timer to measure reaction time
-void ScoreState(uint8_t cheat); //Displays score to LCD
+void ScoreState(void); //Displays score to LCD
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -582,10 +581,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			//You've cheeted and pushed the button during the waiting state
 			
-			//Go to score state and make the score "cheated"
-			currState = 3;
-			cheat = 1;
-			ScoreState(cheat);
+			//Display that the user "cheated" and go back to reset state
+			currState = 0;
+			LCD_DisplayString(0,1, (uint8_t *)"You cheated :(");
+			ResetState();
 		}
 		
 		else if (currState==0 || currState == 2)
@@ -631,13 +630,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	else if (currState == 3 && !scoreDisplayed)
 	{
-		ScoreState(cheat);
+		ScoreState();
 	}
 }
 
 void ResetState()
 {
 	BSP_LCD_SetBackColor(LCD_COLOR_CYAN); //Fills in empty text spaces with colour
+	BSP_LCD_ClearStringLine(8); 
 	LCD_DisplayString(1, 2, (uint8_t *)"MT2TA4 Lab2 ");
 	LCD_DisplayString(4, 2, (uint8_t *)"Reaction Test");
 	LCD_DisplayString(6, 0, (uint8_t *)"Push blue button to start");
@@ -652,6 +652,7 @@ void WaitState()
 	BSP_LED_Off(LED4);
 	
 	//Clear screen
+	BSP_LCD_ClearStringLine(0);
 	BSP_LCD_ClearStringLine(1); 
 	BSP_LCD_ClearStringLine(4);
 	BSP_LCD_ClearStringLine(6);
@@ -680,9 +681,6 @@ void ReactionState()
 	BSP_LED_On(LED3);
 	BSP_LED_On(LED4);
 	
-	//Reseting the cheat flag
-	cheat = 0;
-	
 	//Clear screen
 	BSP_LCD_ClearStringLine(8); 
 	
@@ -690,7 +688,7 @@ void ReactionState()
 	LCD_DisplayString(9, 7, (uint8_t *)"GO!");
 }
 
-void ScoreState(uint8_t cheat)
+void ScoreState()
 {
 	//Set displayed score flag to true
 	scoreDisplayed = 1;
@@ -705,31 +703,24 @@ void ScoreState(uint8_t cheat)
 	//Save current OC_Count (this is the reaction time in milliseconds)
 	uint32_t reactionTime = OC_Count;
 	
-	if (!cheat)
+	
+	//Check if there is faster time in EEPROM
+	EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
+	uint8_t fastestTime = EEREAD;
+	if (reactionTime < EEREAD)
 	{
-		//Check if there is faster time in EEPROM
-		EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
-		uint8_t fastestTime = EEREAD;
-		if (reactionTime < EEREAD)
-		{
-			//The current reaction time is faster, update the EEPROM
-			EE_WriteVariable(VirtAddVarTab[0], reactionTime);
-			fastestTime = reactionTime;
-			
-		}
+		//The current reaction time is faster, update the EEPROM
+		EE_WriteVariable(VirtAddVarTab[0], reactionTime);
+		fastestTime = reactionTime;
 		
-		LCD_DisplayString(5,2,(uint8_t *)"Reaction time ");
-		LCD_DisplayInt(6, 4, reactionTime);
-		LCD_DisplayString(7,2,(uint8_t *)"Fastest time ");
-		LCD_DisplayString(6,7, (uint8_t *)"ms");
-		LCD_DisplayInt(8,4, fastestTime);
-		LCD_DisplayString(8,7, (uint8_t *)"ms");
 	}
 	
-	else
-	{
-		LCD_DisplayString(7,1, (uint8_t *)"You cheated :(");
-	}
+	LCD_DisplayString(5,2,(uint8_t *)"Reaction time ");
+	LCD_DisplayInt(6, 4, reactionTime);
+	LCD_DisplayString(7,2,(uint8_t *)"Fastest time ");
+	LCD_DisplayString(6,9, (uint8_t *)"ms");
+	LCD_DisplayInt(8,4, fastestTime);
+	LCD_DisplayString(8,9, (uint8_t *)"ms");
 }
 
 
