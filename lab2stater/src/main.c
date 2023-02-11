@@ -241,7 +241,7 @@ int main(void)
 	//LCD_DisplayInt(10, 4, 2);
  	
 	//test EEPROM----
-	//EE_WriteVariable(VirtAddVarTab[0], 300);
+	//EE_WriteVariable(VirtAddVarTab[0], 1000);
 	//LCD_DisplayInt(10, 7, 3);
 	
 	EE_ReadVariable(VirtAddVarTab[0], &EEREAD);	
@@ -591,8 +591,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			currState++; //Go the next state
 		}
-		//state++;
-		//if state >2 {state = do nothing};
 	}
 	
 	
@@ -636,6 +634,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void ResetState()
 {
+	scoreDisplayed = 0; //Allows a new score to be displayed
 	BSP_LCD_SetBackColor(LCD_COLOR_CYAN); //Fills in empty text spaces with colour
 	BSP_LCD_ClearStringLine(8); 
 	LCD_DisplayString(1, 2, (uint8_t *)"MT2TA4 Lab2 ");
@@ -706,7 +705,7 @@ void ScoreState()
 	
 	//Check if there is faster time in EEPROM
 	EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
-	uint8_t fastestTime = EEREAD;
+	uint32_t fastestTime = EEREAD;
 	if (reactionTime < EEREAD)
 	{
 		//The current reaction time is faster, update the EEPROM
@@ -715,6 +714,7 @@ void ScoreState()
 		
 	}
 	
+	//Display times to screen
 	LCD_DisplayString(5,2,(uint8_t *)"Reaction time ");
 	LCD_DisplayInt(6, 4, reactionTime);
 	LCD_DisplayString(7,2,(uint8_t *)"Fastest time ");
