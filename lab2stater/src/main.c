@@ -89,6 +89,7 @@ char lcd_buffer[14];    // LCD display buffer
 
 RNG_HandleTypeDef Rng_Handle;
 uint32_t random;
+uint32_t randomDelay;
 
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
@@ -113,9 +114,10 @@ void TIM4_OC_Config(void);
 
 static void EXTILine1_Config(void); // configure the exti line1, for exterrnal button, using PB1
 
-void StateZero(void); //Starting state
-void StateOne(void); //Runs timer to measure reaction time
-void StateTwo(void); //Displays score to LCD
+void ResetState(void); //Starting state
+void WaitState(void); //Causes the unpredictable delay leading into state one
+void ReactionState(void); //Runs timer to measure reaction time
+void ScoreState(void); //Displays score to LCD
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -214,8 +216,9 @@ int main(void)
 	
 		 
 	random &=0x000007FF; // the random numberf is 32bits and is too large for this project. 
-												//just use  its last 10 bits.
+												//just use  its last 10 bits. 
 												//the range is 0 to 2047 for unsigned int.
+												// Wait wait, this is Dorian commenting on Robert's comment, won't 10 bits be up to 1023? 11 bits will get us to 2047?
 												
 	if (Hal_status==HAL_ERROR || Hal_status==HAL_TIMEOUT) // a new rng was NOT generated sucessfully;
 		 random=1000; // millisecond	
@@ -538,28 +541,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32fxx_ha
 																															//for timer 3 , Timer 3 use update event initerrupt
 {
 		if ((*htim).Instance==TIM3)    //since only one timer use this interrupt, this line is actually not needed
-			BSP_LED_Toggle(LED3);
-			BSP_LED_Toggle(LED4);
-	
+			if (currState == 0){
+				//Ensures that the LEDs are only blinking when in the "reset" state
+				BSP_LED_Toggle(LED3);
+				BSP_LED_Toggle(LED4);
+			}
 }
 
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
 	//BSP_LED_Toggle(LED4);
-		if ((*htim).Instance==TIM4) {   //be careful, every 1/1000 second there is a interrupt with the current configuration for TIM4
-			 //BSP_LED_Toggle(LED4); 
+		if ((*htim).Instance==TIM4) {   //be careful, every 1/1000 second there is a interrupt with the current configuration for TIM4 
 			OC_Count=OC_Count+1;
-			if (OC_Count==500)  {   //half second
-					//BSP_LED_Toggle(LED4);	
-					OC_Count=0;		
+			if (OC_Count==randomDelay && currState == 1)  {  
+					OC_Count=0;
+					//Delay is over. Move to reaction time state
+					currState = 2;
+					ReactionState();
 			}		
 		
 		}	
       
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
-
 }
 
 
@@ -573,13 +578,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
   if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
   {
-    UBPressed=1;
+    //UBPressed=1;
 		
-		if (currState < 2)
+		if (currState == 1)
+		{
+			//You've cheeted and pushed the button during the waiting state
+			
+			//Go to score state and make the score "cheated"
+			currState = 3;
+			ScoreState();
+		}
+		
+		else if (currState==0 || currState == 2)
 		{
 			currState++; //Go the next state
 		}
-		
 		//state++;
 		//if state >2 {state = do nothing};
 	}
@@ -595,35 +608,60 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	if (currState == 0)
 	{
-		StateZero();
+		ResetState();
 	}
 	
 	else if (currState == 1)
 	{
-		StateOne();
+		WaitState();
 	}
 	
-	else
+	else if (currState == 2)
 	{
-		StateTwo();
+		ReactionState();
 	}
  
+	else
+	{
+		ScoreState();
+	}
 }
 
-void StateZero()
+void ResetState()
 {
 	//Flashes red and green lights at a period of 500ms
 	
 }
 
-void StateOne()
+void WaitState()
 {
+	//Ensure that the LEDS are off before starting the time delay
+	BSP_LED_Off(LED3);
+	BSP_LED_Off(LED4);
+	
 	//Initalizes the hardware delay
-	//Starts the timer to measure reaction time
+	
+	//Generate the random number
+	Hal_status = HAL_RNG_GenerateRandomNumber(&Rng_Handle, &random);
+	//Take the last 11 bits (up to 2047)
+	random &= 0x000007FF;
+	__HAL_TIM_SET_COUNTER(&Tim4_Handle, 0x0000); //Clear the counter
+	randomDelay = 2000 + random; // Set the delay to 2 seconds + 0-2.027 seconds
 }
 
-void StateTwo()
+void ReactionState()
 {
+	//Turn on LEDs
+	BSP_LED_On(LED3);
+	BSP_LED_On(LED4);
+	//Starts the timer to measure reaction time
+	//For this operation, we'll use the output compare of timer 4 
+}
+
+void ScoreState()
+{
+	BSP_LED_Off(LED3);
+	BSP_LED_On(LED4);
 	//Check if there is faster time in EEPROM
 	//Updates EEPROM saved time if new time is faster
 }
