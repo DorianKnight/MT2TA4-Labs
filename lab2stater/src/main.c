@@ -90,6 +90,7 @@ char lcd_buffer[14];    // LCD display buffer
 RNG_HandleTypeDef Rng_Handle;
 uint32_t random;
 uint32_t randomDelay;
+uint8_t cheat = 0;
 
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
@@ -117,7 +118,7 @@ static void EXTILine1_Config(void); // configure the exti line1, for exterrnal b
 void ResetState(void); //Starting state
 void WaitState(void); //Causes the unpredictable delay leading into state one
 void ReactionState(void); //Runs timer to measure reaction time
-void ScoreState(void); //Displays score to LCD
+void ScoreState(uint8_t cheat); //Displays score to LCD
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -555,15 +556,17 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_h
 		if ((*htim).Instance==TIM4) {   //be careful, every 1/1000 second there is a interrupt with the current configuration for TIM4 
 			OC_Count=OC_Count+1;
 			if (OC_Count==randomDelay && currState == 1)  {  
-					OC_Count=0;
+					
 					//Delay is over. Move to reaction time state
 					currState = 2;
 					ReactionState();
+					OC_Count=0;
 			}		
 		
 		}	
       
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
+		//This command also clears the counter after the waiting state to ensure that reaction time is accurately measured
 		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 }
 
@@ -586,7 +589,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			
 			//Go to score state and make the score "cheated"
 			currState = 3;
-			ScoreState();
+			cheat = 1;
+			ScoreState(cheat);
 		}
 		
 		else if (currState==0 || currState == 2)
@@ -623,7 +627,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  
 	else
 	{
-		ScoreState();
+		ScoreState(cheat);
 	}
 }
 
@@ -646,6 +650,7 @@ void WaitState()
 	//Take the last 11 bits (up to 2047)
 	random &= 0x000007FF;
 	__HAL_TIM_SET_COUNTER(&Tim4_Handle, 0x0000); //Clear the counter
+	OC_Count = 0; //Clear the OC count to ensure that previous overflows don't shorten the waiting delay
 	randomDelay = 2000 + random; // Set the delay to 2 seconds + 0-2.027 seconds
 }
 
@@ -654,16 +659,39 @@ void ReactionState()
 	//Turn on LEDs
 	BSP_LED_On(LED3);
 	BSP_LED_On(LED4);
-	//Starts the timer to measure reaction time
-	//For this operation, we'll use the output compare of timer 4 
+	
+	//Reseting the cheat flag
+	cheat = 0;
+	
+	//Timer counter is cleared after the if statement in the OC function
 }
 
-void ScoreState()
+void ScoreState(uint8_t cheat)
 {
+	//Turn off the LEDs
 	BSP_LED_Off(LED3);
-	BSP_LED_On(LED4);
+	BSP_LED_Off(LED4);
+	
+	//Save current OC_Count (this is the reaction time in milliseconds)
+	uint32_t reactionTime = OC_Count;
+	
 	//Check if there is faster time in EEPROM
 	//Updates EEPROM saved time if new time is faster
+	
+	//Display the reaction time on screen
+	LCD_DisplayString(12,1,(uint8_t *)"Reaction time ");
+	if (!cheat)
+	{
+		LCD_DisplayInt(13, 1, reactionTime);
+		LCD_DisplayString(13,4, (uint8_t *)"ms");
+	}
+	
+	else
+	{
+		LCD_DisplayString(13,1, (uint8_t *)"You cheated :(");
+	}
+	
+	
 }
 
 
