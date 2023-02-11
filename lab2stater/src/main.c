@@ -93,7 +93,7 @@ uint32_t random;
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777};
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
 
-
+uint8_t currState = 0; //Indicates the current state of the FSM
 
 
 
@@ -113,6 +113,9 @@ void TIM4_OC_Config(void);
 
 static void EXTILine1_Config(void); // configure the exti line1, for exterrnal button, using PB1
 
+void StateZero(void); //Starting state
+void StateOne(void); //Runs timer to measure reaction time
+void StateTwo(void); //Displays score to LCD
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -250,7 +253,9 @@ int main(void)
 	{	
 		//do nothing 
 		 if (UBPressed==1) 
-			BSP_LED_On(LED4); 
+		 {
+			//BSP_LED_On(LED4); 
+		 }
 		
 		
   }
@@ -534,17 +539,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32fxx_ha
 {
 		if ((*htim).Instance==TIM3)    //since only one timer use this interrupt, this line is actually not needed
 			BSP_LED_Toggle(LED3);
+			BSP_LED_Toggle(LED4);
 	
 }
 
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
+	//BSP_LED_Toggle(LED4);
 		if ((*htim).Instance==TIM4) {   //be careful, every 1/1000 second there is a interrupt with the current configuration for TIM4
 			 //BSP_LED_Toggle(LED4); 
 			OC_Count=OC_Count+1;
 			if (OC_Count==500)  {   //half second
-					BSP_LED_Toggle(LED4);	
+					//BSP_LED_Toggle(LED4);	
 					OC_Count=0;		
 			}		
 		
@@ -566,7 +573,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
   if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
   {
-    				UBPressed=1;
+    UBPressed=1;
+		
+		if (currState < 2)
+		{
+			currState++; //Go the next state
+		}
+		
 		//state++;
 		//if state >2 {state = do nothing};
 	}
@@ -575,14 +588,46 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == GPIO_PIN_1)
   {
 			extern_UBPressed=1;
-		//state =0;
+			currState = 0; //Go back to the starting state
 	}
 	
-	// if state 0
-	// if state 1
-	// if state 2
+	//States are held within the external interrupt callback so that a state change only occurs when a button is pressed
+	
+	if (currState == 0)
+	{
+		StateZero();
+	}
+	
+	else if (currState == 1)
+	{
+		StateOne();
+	}
+	
+	else
+	{
+		StateTwo();
+	}
  
 }
+
+void StateZero()
+{
+	//Flashes red and green lights at a period of 500ms
+	
+}
+
+void StateOne()
+{
+	//Initalizes the hardware delay
+	//Starts the timer to measure reaction time
+}
+
+void StateTwo()
+{
+	//Check if there is faster time in EEPROM
+	//Updates EEPROM saved time if new time is faster
+}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
