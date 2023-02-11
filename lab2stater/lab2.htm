@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\lab2.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\lab2.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Sat Feb 11 12:34:36 2023
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Sat Feb 11 12:55:39 2023
 <BR><P>
 <H3>Maximum Stack Usage =        196 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -729,6 +729,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = EE_ReadVariable
 </UL>
 <BR>[Called By]<UL><LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_WriteVariable
+<LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ScoreState
 <LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_Init
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -741,18 +742,18 @@ Global Symbols
 <LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_VerifyPageFullWriteVariable
 <LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_ReadVariable
 </UL>
-<BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<BR>[Called By]<UL><LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ScoreState
 </UL>
 
 <P><STRONG><a name="[10]"></a>EXTI0_IRQHandler</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, stm32f4xx_it.o(.text.EXTI0_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = EXTI0_IRQHandler &rArr; HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; LCD_DisplayString &rArr; BSP_LCD_DisplayChar
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = EXTI0_IRQHandler &rArr; HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; EE_WriteVariable &rArr; EE_VerifyPageFullWriteVariable &rArr; HAL_FLASH_Program &rArr; FLASH_WaitForLastOperation
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_EXTI_IRQHandler
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f429xx.o(RESET)
 </UL>
 <P><STRONG><a name="[11]"></a>EXTI1_IRQHandler</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, stm32f4xx_it.o(.text.EXTI1_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = EXTI1_IRQHandler &rArr; HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; LCD_DisplayString &rArr; BSP_LCD_DisplayChar
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = EXTI1_IRQHandler &rArr; HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; EE_WriteVariable &rArr; EE_VerifyPageFullWriteVariable &rArr; HAL_FLASH_Program &rArr; FLASH_WaitForLastOperation
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_EXTI_IRQHandler
 </UL>
@@ -889,7 +890,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[b1]"></a>HAL_GPIO_EXTI_Callback</STRONG> (Thumb, 144 bytes, Stack size 8 bytes, main.o(.text.HAL_GPIO_EXTI_Callback))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; LCD_DisplayString &rArr; BSP_LCD_DisplayChar
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; EE_WriteVariable &rArr; EE_VerifyPageFullWriteVariable &rArr; HAL_FLASH_Program &rArr; FLASH_WaitForLastOperation
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;WaitState
 <LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ScoreState
@@ -899,7 +900,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[a3]"></a>HAL_GPIO_EXTI_IRQHandler</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, stm32f4xx_hal_gpio.o(.text.HAL_GPIO_EXTI_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; LCD_DisplayString &rArr; BSP_LCD_DisplayChar
+<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = HAL_GPIO_EXTI_IRQHandler &rArr; HAL_GPIO_EXTI_Callback &rArr; ScoreState &rArr; EE_WriteVariable &rArr; EE_VerifyPageFullWriteVariable &rArr; HAL_FLASH_Program &rArr; FLASH_WaitForLastOperation
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_GPIO_EXTI_Callback
 </UL>
@@ -1375,10 +1376,12 @@ Global Symbols
 <P><STRONG><a name="[6]"></a>SVC_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32f4xx_it.o(.text.SVC_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f429xx.o(RESET)
 </UL>
-<P><STRONG><a name="[b2]"></a>ScoreState</STRONG> (Thumb, 96 bytes, Stack size 32 bytes, main.o(.text.ScoreState))
-<BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = ScoreState &rArr; LCD_DisplayString &rArr; BSP_LCD_DisplayChar
+<P><STRONG><a name="[b2]"></a>ScoreState</STRONG> (Thumb, 188 bytes, Stack size 40 bytes, main.o(.text.ScoreState))
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = ScoreState &rArr; EE_WriteVariable &rArr; EE_VerifyPageFullWriteVariable &rArr; HAL_FLASH_Program &rArr; FLASH_WaitForLastOperation
 </UL>
-<BR>[Calls]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LED_Off
+<BR>[Calls]<UL><LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_WriteVariable
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LED_Off
+<LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_ReadVariable
 <LI><a href="#[e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_DisplayString
 <LI><a href="#[ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
 </UL>
@@ -1494,11 +1497,10 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> ili9341.o(.data.ili9341_drv)
 </UL>
-<P><STRONG><a name="[64]"></a>main</STRONG> (Thumb, 820 bytes, Stack size 80 bytes, main.o(.text.main))
+<P><STRONG><a name="[64]"></a>main</STRONG> (Thumb, 808 bytes, Stack size 80 bytes, main.o(.text.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 196<LI>Call Chain = main &rArr; BSP_LCD_LayerDefaultInit &rArr; HAL_LTDC_ConfigLayer &rArr; LTDC_SetConfig
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_ReadVariable
-<LI><a href="#[a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_WriteVariable
 <LI><a href="#[9f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_Init
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_FLASH_Unlock
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RNG_GenerateRandomNumber

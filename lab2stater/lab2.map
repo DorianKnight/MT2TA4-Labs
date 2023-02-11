@@ -62,7 +62,6 @@ Section Cross References
     main.o(.text.main) refers to stm32f4xx_hal_flash.o(.text.HAL_FLASH_Unlock) for HAL_FLASH_Unlock
     main.o(.text.main) refers to hal_eeprom.o(.text.EE_Init) for EE_Init
     main.o(.text.main) refers to main.o(.data.VirtAddVarTab) for VirtAddVarTab
-    main.o(.text.main) refers to hal_eeprom.o(.text.EE_WriteVariable) for EE_WriteVariable
     main.o(.text.main) refers to main.o(.bss.EEREAD) for EEREAD
     main.o(.text.main) refers to hal_eeprom.o(.text.EE_ReadVariable) for EE_ReadVariable
     main.o(.text.main) refers to main.o(.bss.UBPressed) for UBPressed
@@ -120,6 +119,10 @@ Section Cross References
     main.o(.text.ScoreState) refers to stm32f429i_discovery.o(.text.BSP_LED_Off) for BSP_LED_Off
     main.o(.text.ScoreState) refers to main.o(.bss.OC_Count) for OC_Count
     main.o(.text.ScoreState) refers to main.o(.text.LCD_DisplayString) for LCD_DisplayString
+    main.o(.text.ScoreState) refers to main.o(.data.VirtAddVarTab) for VirtAddVarTab
+    main.o(.text.ScoreState) refers to main.o(.bss.EEREAD) for EEREAD
+    main.o(.text.ScoreState) refers to hal_eeprom.o(.text.EE_ReadVariable) for EE_ReadVariable
+    main.o(.text.ScoreState) refers to hal_eeprom.o(.text.EE_WriteVariable) for EE_WriteVariable
     main.o(.text.ScoreState) refers to main.o(.rodata.str1.1) for .L.str.6
     main.o(.text.ScoreState) refers to printfa.o(i.__0sprintf) for __2sprintf
     main.o(.ARM.exidx.text.ScoreState) refers to main.o(.text.ScoreState) for [Anonymous Symbol]
@@ -4226,51 +4229,52 @@ Image Symbol Table
     [Anonymous Symbol]                       0x08003ef2   Section        0  stm32f429i_discovery.o(.text.SPIx_Write)
     [Anonymous Symbol]                       0x08003f2c   Section        0  stm32f4xx_it.o(.text.SVC_Handler)
     [Anonymous Symbol]                       0x08003f30   Section        0  main.o(.text.ScoreState)
-    [Anonymous Symbol]                       0x08003fb4   Section        0  stm32f4xx_it.o(.text.SysTick_Handler)
-    [Anonymous Symbol]                       0x08003fb8   Section        0  system_stm32f4xx.o(.text.SystemInit)
-    [Anonymous Symbol]                       0x08003fcc   Section        0  main.o(.text.TIM3_Config)
-    [Anonymous Symbol]                       0x08004040   Section        0  stm32f4xx_it.o(.text.TIM3_IRQHandler)
-    [Anonymous Symbol]                       0x0800404c   Section        0  stm32f4xx_it.o(.text.TIM4_IRQHandler)
-    [Anonymous Symbol]                       0x08004058   Section        0  main.o(.text.TIM4_OC_Config)
-    [Anonymous Symbol]                       0x08004098   Section        0  stm32f4xx_hal_tim.o(.text.TIM_Base_SetConfig)
-    TIM_OC1_SetConfig                        0x080041b5   Thumb Code   100  stm32f4xx_hal_tim.o(.text.TIM_OC1_SetConfig)
-    [Anonymous Symbol]                       0x080041b4   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC1_SetConfig)
-    [Anonymous Symbol]                       0x08004218   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC2_SetConfig)
-    TIM_OC3_SetConfig                        0x08004281   Thumb Code   102  stm32f4xx_hal_tim.o(.text.TIM_OC3_SetConfig)
-    [Anonymous Symbol]                       0x08004280   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC3_SetConfig)
-    TIM_OC4_SetConfig                        0x080042e7   Thumb Code    78  stm32f4xx_hal_tim.o(.text.TIM_OC4_SetConfig)
-    [Anonymous Symbol]                       0x080042e6   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC4_SetConfig)
-    [Anonymous Symbol]                       0x08004334   Section        0  stm32f4xx_it.o(.text.UsageFault_Handler)
-    [Anonymous Symbol]                       0x08004336   Section        0  main.o(.text.WaitState)
-    [Anonymous Symbol]                       0x08004394   Section        0  ili9341.o(.text.ili9341_DisplayOff)
-    [Anonymous Symbol]                       0x0800439a   Section        0  ili9341.o(.text.ili9341_DisplayOn)
-    [Anonymous Symbol]                       0x080043a0   Section        0  ili9341.o(.text.ili9341_GetLcdPixelHeight)
-    [Anonymous Symbol]                       0x080043a6   Section        0  ili9341.o(.text.ili9341_GetLcdPixelWidth)
-    [Anonymous Symbol]                       0x080043aa   Section        0  ili9341.o(.text.ili9341_Init)
-    [Anonymous Symbol]                       0x0800463c   Section        0  ili9341.o(.text.ili9341_ReadID)
-    [Anonymous Symbol]                       0x08004650   Section        0  main.o(.text.main)
-    i.__0sprintf                             0x080049d8   Section        0  printfa.o(i.__0sprintf)
-    i.__scatterload_copy                     0x08004a00   Section       14  handlers.o(i.__scatterload_copy)
-    i.__scatterload_null                     0x08004a0e   Section        2  handlers.o(i.__scatterload_null)
-    i.__scatterload_zeroinit                 0x08004a10   Section       14  handlers.o(i.__scatterload_zeroinit)
-    _fp_digits                               0x08004a21   Thumb Code   366  printfa.o(i._fp_digits)
-    i._fp_digits                             0x08004a20   Section        0  printfa.o(i._fp_digits)
-    _printf_core                             0x08004ba5   Thumb Code  1744  printfa.o(i._printf_core)
-    i._printf_core                           0x08004ba4   Section        0  printfa.o(i._printf_core)
-    _printf_post_padding                     0x08005281   Thumb Code    36  printfa.o(i._printf_post_padding)
-    i._printf_post_padding                   0x08005280   Section        0  printfa.o(i._printf_post_padding)
-    _printf_pre_padding                      0x080052a5   Thumb Code    46  printfa.o(i._printf_pre_padding)
-    i._printf_pre_padding                    0x080052a4   Section        0  printfa.o(i._printf_pre_padding)
-    _sputc                                   0x080052d3   Thumb Code    10  printfa.o(i._sputc)
-    i._sputc                                 0x080052d2   Section        0  printfa.o(i._sputc)
-    .Lswitch.table.HAL_TIM_IC_Start_IT       0x08007c80   Data          16  stm32f4xx_hal_tim.o(.rodata.cst16)
-    .Lswitch.table.HAL_TIM_IC_Stop_IT        0x08007c90   Data          16  stm32f4xx_hal_tim.o(.rodata.cst16)
-    .Lswitch.table.HAL_LTDC_SetPitch_NoReload 0x08007ca0   Data          32  stm32f4xx_hal_ltdc.o(.rodata.cst32)
-    DMA_CalcBaseAndBitshift.flagBitshiftOffset 0x08007cc0   Data           8  stm32f4xx_hal_dma.o(.rodata.cst8)
-    [Anonymous Symbol]                       0x08007cc0   Section        0  stm32f4xx_hal_dma.o(.rodata.cst8)
-    .L.str.6                                 0x08007cc8   Data           3  main.o(.rodata.str1.1)
-    [Anonymous Symbol]                       0x08007cc8   Section        0  main.o(.rodata.str1.1)
-    .L.str.7                                 0x08007ccb   Data           5  main.o(.rodata.str1.1)
+    [Anonymous Symbol]                       0x0800401c   Section        0  stm32f4xx_it.o(.text.SysTick_Handler)
+    [Anonymous Symbol]                       0x08004020   Section        0  system_stm32f4xx.o(.text.SystemInit)
+    [Anonymous Symbol]                       0x08004034   Section        0  main.o(.text.TIM3_Config)
+    [Anonymous Symbol]                       0x080040a8   Section        0  stm32f4xx_it.o(.text.TIM3_IRQHandler)
+    [Anonymous Symbol]                       0x080040b4   Section        0  stm32f4xx_it.o(.text.TIM4_IRQHandler)
+    [Anonymous Symbol]                       0x080040c0   Section        0  main.o(.text.TIM4_OC_Config)
+    [Anonymous Symbol]                       0x08004100   Section        0  stm32f4xx_hal_tim.o(.text.TIM_Base_SetConfig)
+    TIM_OC1_SetConfig                        0x0800421d   Thumb Code   100  stm32f4xx_hal_tim.o(.text.TIM_OC1_SetConfig)
+    [Anonymous Symbol]                       0x0800421c   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC1_SetConfig)
+    [Anonymous Symbol]                       0x08004280   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC2_SetConfig)
+    TIM_OC3_SetConfig                        0x080042e9   Thumb Code   102  stm32f4xx_hal_tim.o(.text.TIM_OC3_SetConfig)
+    [Anonymous Symbol]                       0x080042e8   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC3_SetConfig)
+    TIM_OC4_SetConfig                        0x0800434f   Thumb Code    78  stm32f4xx_hal_tim.o(.text.TIM_OC4_SetConfig)
+    [Anonymous Symbol]                       0x0800434e   Section        0  stm32f4xx_hal_tim.o(.text.TIM_OC4_SetConfig)
+    [Anonymous Symbol]                       0x0800439c   Section        0  stm32f4xx_it.o(.text.UsageFault_Handler)
+    [Anonymous Symbol]                       0x0800439e   Section        0  main.o(.text.WaitState)
+    [Anonymous Symbol]                       0x080043fc   Section        0  ili9341.o(.text.ili9341_DisplayOff)
+    [Anonymous Symbol]                       0x08004402   Section        0  ili9341.o(.text.ili9341_DisplayOn)
+    [Anonymous Symbol]                       0x08004408   Section        0  ili9341.o(.text.ili9341_GetLcdPixelHeight)
+    [Anonymous Symbol]                       0x0800440e   Section        0  ili9341.o(.text.ili9341_GetLcdPixelWidth)
+    [Anonymous Symbol]                       0x08004412   Section        0  ili9341.o(.text.ili9341_Init)
+    [Anonymous Symbol]                       0x080046a4   Section        0  ili9341.o(.text.ili9341_ReadID)
+    [Anonymous Symbol]                       0x080046b8   Section        0  main.o(.text.main)
+    i.__0sprintf                             0x08004a34   Section        0  printfa.o(i.__0sprintf)
+    i.__scatterload_copy                     0x08004a5c   Section       14  handlers.o(i.__scatterload_copy)
+    i.__scatterload_null                     0x08004a6a   Section        2  handlers.o(i.__scatterload_null)
+    i.__scatterload_zeroinit                 0x08004a6c   Section       14  handlers.o(i.__scatterload_zeroinit)
+    _fp_digits                               0x08004a7d   Thumb Code   366  printfa.o(i._fp_digits)
+    i._fp_digits                             0x08004a7c   Section        0  printfa.o(i._fp_digits)
+    _printf_core                             0x08004c01   Thumb Code  1744  printfa.o(i._printf_core)
+    i._printf_core                           0x08004c00   Section        0  printfa.o(i._printf_core)
+    _printf_post_padding                     0x080052dd   Thumb Code    36  printfa.o(i._printf_post_padding)
+    i._printf_post_padding                   0x080052dc   Section        0  printfa.o(i._printf_post_padding)
+    _printf_pre_padding                      0x08005301   Thumb Code    46  printfa.o(i._printf_pre_padding)
+    i._printf_pre_padding                    0x08005300   Section        0  printfa.o(i._printf_pre_padding)
+    _sputc                                   0x0800532f   Thumb Code    10  printfa.o(i._sputc)
+    i._sputc                                 0x0800532e   Section        0  printfa.o(i._sputc)
+    .Lswitch.table.HAL_TIM_IC_Start_IT       0x08007cdc   Data          16  stm32f4xx_hal_tim.o(.rodata.cst16)
+    .Lswitch.table.HAL_TIM_IC_Stop_IT        0x08007cec   Data          16  stm32f4xx_hal_tim.o(.rodata.cst16)
+    .Lswitch.table.HAL_LTDC_SetPitch_NoReload 0x08007cfc   Data          32  stm32f4xx_hal_ltdc.o(.rodata.cst32)
+    DMA_CalcBaseAndBitshift.flagBitshiftOffset 0x08007d1c   Data           8  stm32f4xx_hal_dma.o(.rodata.cst8)
+    [Anonymous Symbol]                       0x08007d1c   Section        0  stm32f4xx_hal_dma.o(.rodata.cst8)
+    .L.str.6                                 0x08007d24   Data           3  main.o(.rodata.str1.1)
+    [Anonymous Symbol]                       0x08007d24   Section        0  main.o(.rodata.str1.1)
+    .L.str.7                                 0x08007d27   Data           5  main.o(.rodata.str1.1)
+    .L.str.10                                0x08007d2c   Data           3  main.o(.rodata.str1.1)
     ActiveLayer                              0x20000070   Data           4  stm32f429i_discovery_lcd.o(.bss.ActiveLayer)
     [Anonymous Symbol]                       0x20000070   Section        0  stm32f429i_discovery_lcd.o(.bss.ActiveLayer)
     BSP_SDRAM_Init.sdramstatus               0x20000074   Data           1  stm32f429i_discovery_sdram.o(.bss.BSP_SDRAM_Init.sdramstatus)
@@ -4583,38 +4587,38 @@ Image Symbol Table
     NMI_Handler                              0x08003cbb   Thumb Code     2  stm32f4xx_it.o(.text.NMI_Handler)
     PendSV_Handler                           0x08003cbd   Thumb Code     2  stm32f4xx_it.o(.text.PendSV_Handler)
     SVC_Handler                              0x08003f2d   Thumb Code     2  stm32f4xx_it.o(.text.SVC_Handler)
-    ScoreState                               0x08003f31   Thumb Code    96  main.o(.text.ScoreState)
-    SysTick_Handler                          0x08003fb5   Thumb Code     4  stm32f4xx_it.o(.text.SysTick_Handler)
-    SystemInit                               0x08003fb9   Thumb Code    18  system_stm32f4xx.o(.text.SystemInit)
-    TIM3_Config                              0x08003fcd   Thumb Code   116  main.o(.text.TIM3_Config)
-    TIM3_IRQHandler                          0x08004041   Thumb Code    12  stm32f4xx_it.o(.text.TIM3_IRQHandler)
-    TIM4_IRQHandler                          0x0800404d   Thumb Code    12  stm32f4xx_it.o(.text.TIM4_IRQHandler)
-    TIM4_OC_Config                           0x08004059   Thumb Code    64  main.o(.text.TIM4_OC_Config)
-    TIM_Base_SetConfig                       0x08004099   Thumb Code   284  stm32f4xx_hal_tim.o(.text.TIM_Base_SetConfig)
-    TIM_OC2_SetConfig                        0x08004219   Thumb Code   104  stm32f4xx_hal_tim.o(.text.TIM_OC2_SetConfig)
-    UsageFault_Handler                       0x08004335   Thumb Code     2  stm32f4xx_it.o(.text.UsageFault_Handler)
-    WaitState                                0x08004337   Thumb Code    94  main.o(.text.WaitState)
-    ili9341_DisplayOff                       0x08004395   Thumb Code     6  ili9341.o(.text.ili9341_DisplayOff)
-    ili9341_DisplayOn                        0x0800439b   Thumb Code     6  ili9341.o(.text.ili9341_DisplayOn)
-    ili9341_GetLcdPixelHeight                0x080043a1   Thumb Code     6  ili9341.o(.text.ili9341_GetLcdPixelHeight)
-    ili9341_GetLcdPixelWidth                 0x080043a7   Thumb Code     4  ili9341.o(.text.ili9341_GetLcdPixelWidth)
-    ili9341_Init                             0x080043ab   Thumb Code   658  ili9341.o(.text.ili9341_Init)
-    ili9341_ReadID                           0x0800463d   Thumb Code    18  ili9341.o(.text.ili9341_ReadID)
-    main                                     0x08004651   Thumb Code   820  main.o(.text.main)
-    __0sprintf                               0x080049d9   Thumb Code    34  printfa.o(i.__0sprintf)
-    __1sprintf                               0x080049d9   Thumb Code     0  printfa.o(i.__0sprintf)
-    __2sprintf                               0x080049d9   Thumb Code     0  printfa.o(i.__0sprintf)
-    __c89sprintf                             0x080049d9   Thumb Code     0  printfa.o(i.__0sprintf)
-    sprintf                                  0x080049d9   Thumb Code     0  printfa.o(i.__0sprintf)
-    __scatterload_copy                       0x08004a01   Thumb Code    14  handlers.o(i.__scatterload_copy)
-    __scatterload_null                       0x08004a0f   Thumb Code     2  handlers.o(i.__scatterload_null)
-    __scatterload_zeroinit                   0x08004a11   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    AHBPrescTable                            0x080052dc   Data          16  system_stm32f4xx.o(.rodata.AHBPrescTable)
-    Font20_Table                             0x080052ec   Data        3800  stm32f429i_discovery_lcd.o(.rodata.Font20_Table)
-    Font24_Table                             0x080061c4   Data        6840  stm32f429i_discovery_lcd.o(.rodata.Font24_Table)
-    GPIO_PIN                                 0x08007c7c   Data           4  stm32f429i_discovery.o(.rodata.GPIO_PIN)
-    Region$$Table$$Base                      0x08007cd0   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x08007cf0   Number         0  anon$$obj.o(Region$$Table)
+    ScoreState                               0x08003f31   Thumb Code   188  main.o(.text.ScoreState)
+    SysTick_Handler                          0x0800401d   Thumb Code     4  stm32f4xx_it.o(.text.SysTick_Handler)
+    SystemInit                               0x08004021   Thumb Code    18  system_stm32f4xx.o(.text.SystemInit)
+    TIM3_Config                              0x08004035   Thumb Code   116  main.o(.text.TIM3_Config)
+    TIM3_IRQHandler                          0x080040a9   Thumb Code    12  stm32f4xx_it.o(.text.TIM3_IRQHandler)
+    TIM4_IRQHandler                          0x080040b5   Thumb Code    12  stm32f4xx_it.o(.text.TIM4_IRQHandler)
+    TIM4_OC_Config                           0x080040c1   Thumb Code    64  main.o(.text.TIM4_OC_Config)
+    TIM_Base_SetConfig                       0x08004101   Thumb Code   284  stm32f4xx_hal_tim.o(.text.TIM_Base_SetConfig)
+    TIM_OC2_SetConfig                        0x08004281   Thumb Code   104  stm32f4xx_hal_tim.o(.text.TIM_OC2_SetConfig)
+    UsageFault_Handler                       0x0800439d   Thumb Code     2  stm32f4xx_it.o(.text.UsageFault_Handler)
+    WaitState                                0x0800439f   Thumb Code    94  main.o(.text.WaitState)
+    ili9341_DisplayOff                       0x080043fd   Thumb Code     6  ili9341.o(.text.ili9341_DisplayOff)
+    ili9341_DisplayOn                        0x08004403   Thumb Code     6  ili9341.o(.text.ili9341_DisplayOn)
+    ili9341_GetLcdPixelHeight                0x08004409   Thumb Code     6  ili9341.o(.text.ili9341_GetLcdPixelHeight)
+    ili9341_GetLcdPixelWidth                 0x0800440f   Thumb Code     4  ili9341.o(.text.ili9341_GetLcdPixelWidth)
+    ili9341_Init                             0x08004413   Thumb Code   658  ili9341.o(.text.ili9341_Init)
+    ili9341_ReadID                           0x080046a5   Thumb Code    18  ili9341.o(.text.ili9341_ReadID)
+    main                                     0x080046b9   Thumb Code   808  main.o(.text.main)
+    __0sprintf                               0x08004a35   Thumb Code    34  printfa.o(i.__0sprintf)
+    __1sprintf                               0x08004a35   Thumb Code     0  printfa.o(i.__0sprintf)
+    __2sprintf                               0x08004a35   Thumb Code     0  printfa.o(i.__0sprintf)
+    __c89sprintf                             0x08004a35   Thumb Code     0  printfa.o(i.__0sprintf)
+    sprintf                                  0x08004a35   Thumb Code     0  printfa.o(i.__0sprintf)
+    __scatterload_copy                       0x08004a5d   Thumb Code    14  handlers.o(i.__scatterload_copy)
+    __scatterload_null                       0x08004a6b   Thumb Code     2  handlers.o(i.__scatterload_null)
+    __scatterload_zeroinit                   0x08004a6d   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
+    AHBPrescTable                            0x08005338   Data          16  system_stm32f4xx.o(.rodata.AHBPrescTable)
+    Font20_Table                             0x08005348   Data        3800  stm32f429i_discovery_lcd.o(.rodata.Font20_Table)
+    Font24_Table                             0x08006220   Data        6840  stm32f429i_discovery_lcd.o(.rodata.Font24_Table)
+    GPIO_PIN                                 0x08007cd8   Data           4  stm32f429i_discovery.o(.rodata.GPIO_PIN)
+    Region$$Table$$Base                      0x08007d30   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08007d50   Number         0  anon$$obj.o(Region$$Table)
     BUTTON_PORT                              0x20000000   Data           4  stm32f429i_discovery.o(.data.BUTTON_PORT)
     Font20                                   0x20000004   Data           8  stm32f429i_discovery_lcd.o(.data.Font20)
     Font24                                   0x2000000c   Data           8  stm32f429i_discovery_lcd.o(.data.Font24)
@@ -4659,9 +4663,9 @@ Memory Map of the image
 
   Image Entry point : 0x080001ad
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00007d60, Max: 0x00200000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00007dc0, Max: 0x00200000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00007cf0, Max: 0x00200000, ABSOLUTE)
+    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00007d50, Max: 0x00200000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -4827,87 +4831,88 @@ Memory Map of the image
     0x08003ef2   0x08003ef2   0x0000003a   Code   RO          250    .text.SPIx_Write    stm32f429i_discovery.o
     0x08003f2c   0x08003f2c   0x00000002   Code   RO           12    .text.SVC_Handler   stm32f4xx_it.o
     0x08003f2e   0x08003f2e   0x00000002   PAD
-    0x08003f30   0x08003f30   0x00000084   Code   RO           57    .text.ScoreState    main.o
-    0x08003fb4   0x08003fb4   0x00000004   Code   RO           18    .text.SysTick_Handler  stm32f4xx_it.o
-    0x08003fb8   0x08003fb8   0x00000012   Code   RO         2099    .text.SystemInit    system_stm32f4xx.o
-    0x08003fca   0x08003fca   0x00000002   PAD
-    0x08003fcc   0x08003fcc   0x00000074   Code   RO           37    .text.TIM3_Config   main.o
-    0x08004040   0x08004040   0x0000000c   Code   RO           24    .text.TIM3_IRQHandler  stm32f4xx_it.o
-    0x0800404c   0x0800404c   0x0000000c   Code   RO           26    .text.TIM4_IRQHandler  stm32f4xx_it.o
-    0x08004058   0x08004058   0x00000040   Code   RO           41    .text.TIM4_OC_Config  main.o
-    0x08004098   0x08004098   0x0000011c   Code   RO         1583    .text.TIM_Base_SetConfig  stm32f4xx_hal_tim.o
-    0x080041b4   0x080041b4   0x00000064   Code   RO         1727    .text.TIM_OC1_SetConfig  stm32f4xx_hal_tim.o
-    0x08004218   0x08004218   0x00000068   Code   RO         1729    .text.TIM_OC2_SetConfig  stm32f4xx_hal_tim.o
-    0x08004280   0x08004280   0x00000066   Code   RO         1731    .text.TIM_OC3_SetConfig  stm32f4xx_hal_tim.o
-    0x080042e6   0x080042e6   0x0000004e   Code   RO         1733    .text.TIM_OC4_SetConfig  stm32f4xx_hal_tim.o
-    0x08004334   0x08004334   0x00000002   Code   RO           10    .text.UsageFault_Handler  stm32f4xx_it.o
-    0x08004336   0x08004336   0x0000005e   Code   RO           61    .text.WaitState     main.o
-    0x08004394   0x08004394   0x00000006   Code   RO          133    .text.ili9341_DisplayOff  ili9341.o
-    0x0800439a   0x0800439a   0x00000006   Code   RO          131    .text.ili9341_DisplayOn  ili9341.o
-    0x080043a0   0x080043a0   0x00000006   Code   RO          137    .text.ili9341_GetLcdPixelHeight  ili9341.o
-    0x080043a6   0x080043a6   0x00000004   Code   RO          135    .text.ili9341_GetLcdPixelWidth  ili9341.o
-    0x080043aa   0x080043aa   0x00000292   Code   RO          127    .text.ili9341_Init  ili9341.o
-    0x0800463c   0x0800463c   0x00000012   Code   RO          129    .text.ili9341_ReadID  ili9341.o
-    0x0800464e   0x0800464e   0x00000002   PAD
-    0x08004650   0x08004650   0x00000388   Code   RO           35    .text.main          main.o
-    0x080049d8   0x080049d8   0x00000028   Code   RO         2355    i.__0sprintf        mc_w.l(printfa.o)
-    0x08004a00   0x08004a00   0x0000000e   Code   RO         2438    i.__scatterload_copy  mc_w.l(handlers.o)
-    0x08004a0e   0x08004a0e   0x00000002   Code   RO         2439    i.__scatterload_null  mc_w.l(handlers.o)
-    0x08004a10   0x08004a10   0x0000000e   Code   RO         2440    i.__scatterload_zeroinit  mc_w.l(handlers.o)
-    0x08004a1e   0x08004a1e   0x00000002   PAD
-    0x08004a20   0x08004a20   0x00000184   Code   RO         2360    i._fp_digits        mc_w.l(printfa.o)
-    0x08004ba4   0x08004ba4   0x000006dc   Code   RO         2361    i._printf_core      mc_w.l(printfa.o)
-    0x08005280   0x08005280   0x00000024   Code   RO         2362    i._printf_post_padding  mc_w.l(printfa.o)
-    0x080052a4   0x080052a4   0x0000002e   Code   RO         2363    i._printf_pre_padding  mc_w.l(printfa.o)
-    0x080052d2   0x080052d2   0x0000000a   Code   RO         2365    i._sputc            mc_w.l(printfa.o)
-    0x080052dc   0x080052dc   0x00000010   Data   RO         2104    .rodata.AHBPrescTable  system_stm32f4xx.o
-    0x080052ec   0x080052ec   0x00000ed8   Data   RO          420    .rodata.Font20_Table  stm32f429i_discovery_lcd.o
-    0x080061c4   0x080061c4   0x00001ab8   Data   RO          418    .rodata.Font24_Table  stm32f429i_discovery_lcd.o
-    0x08007c7c   0x08007c7c   0x00000004   Data   RO          283    .rodata.GPIO_PIN    stm32f429i_discovery.o
-    0x08007c80   0x08007c80   0x00000020   Data   RO         1805    .rodata.cst16       stm32f4xx_hal_tim.o
-    0x08007ca0   0x08007ca0   0x00000020   Data   RO         1184    .rodata.cst32       stm32f4xx_hal_ltdc.o
-    0x08007cc0   0x08007cc0   0x00000008   Data   RO          652    .rodata.cst8        stm32f4xx_hal_dma.o
-    0x08007cc8   0x08007cc8   0x00000008   Data   RO           74    .rodata.str1.1      main.o
-    0x08007cd0   0x08007cd0   0x00000020   Data   RO         2437    Region$$Table       anon$$obj.o
+    0x08003f30   0x08003f30   0x000000ec   Code   RO           57    .text.ScoreState    main.o
+    0x0800401c   0x0800401c   0x00000004   Code   RO           18    .text.SysTick_Handler  stm32f4xx_it.o
+    0x08004020   0x08004020   0x00000012   Code   RO         2099    .text.SystemInit    system_stm32f4xx.o
+    0x08004032   0x08004032   0x00000002   PAD
+    0x08004034   0x08004034   0x00000074   Code   RO           37    .text.TIM3_Config   main.o
+    0x080040a8   0x080040a8   0x0000000c   Code   RO           24    .text.TIM3_IRQHandler  stm32f4xx_it.o
+    0x080040b4   0x080040b4   0x0000000c   Code   RO           26    .text.TIM4_IRQHandler  stm32f4xx_it.o
+    0x080040c0   0x080040c0   0x00000040   Code   RO           41    .text.TIM4_OC_Config  main.o
+    0x08004100   0x08004100   0x0000011c   Code   RO         1583    .text.TIM_Base_SetConfig  stm32f4xx_hal_tim.o
+    0x0800421c   0x0800421c   0x00000064   Code   RO         1727    .text.TIM_OC1_SetConfig  stm32f4xx_hal_tim.o
+    0x08004280   0x08004280   0x00000068   Code   RO         1729    .text.TIM_OC2_SetConfig  stm32f4xx_hal_tim.o
+    0x080042e8   0x080042e8   0x00000066   Code   RO         1731    .text.TIM_OC3_SetConfig  stm32f4xx_hal_tim.o
+    0x0800434e   0x0800434e   0x0000004e   Code   RO         1733    .text.TIM_OC4_SetConfig  stm32f4xx_hal_tim.o
+    0x0800439c   0x0800439c   0x00000002   Code   RO           10    .text.UsageFault_Handler  stm32f4xx_it.o
+    0x0800439e   0x0800439e   0x0000005e   Code   RO           61    .text.WaitState     main.o
+    0x080043fc   0x080043fc   0x00000006   Code   RO          133    .text.ili9341_DisplayOff  ili9341.o
+    0x08004402   0x08004402   0x00000006   Code   RO          131    .text.ili9341_DisplayOn  ili9341.o
+    0x08004408   0x08004408   0x00000006   Code   RO          137    .text.ili9341_GetLcdPixelHeight  ili9341.o
+    0x0800440e   0x0800440e   0x00000004   Code   RO          135    .text.ili9341_GetLcdPixelWidth  ili9341.o
+    0x08004412   0x08004412   0x00000292   Code   RO          127    .text.ili9341_Init  ili9341.o
+    0x080046a4   0x080046a4   0x00000012   Code   RO          129    .text.ili9341_ReadID  ili9341.o
+    0x080046b6   0x080046b6   0x00000002   PAD
+    0x080046b8   0x080046b8   0x0000037c   Code   RO           35    .text.main          main.o
+    0x08004a34   0x08004a34   0x00000028   Code   RO         2355    i.__0sprintf        mc_w.l(printfa.o)
+    0x08004a5c   0x08004a5c   0x0000000e   Code   RO         2438    i.__scatterload_copy  mc_w.l(handlers.o)
+    0x08004a6a   0x08004a6a   0x00000002   Code   RO         2439    i.__scatterload_null  mc_w.l(handlers.o)
+    0x08004a6c   0x08004a6c   0x0000000e   Code   RO         2440    i.__scatterload_zeroinit  mc_w.l(handlers.o)
+    0x08004a7a   0x08004a7a   0x00000002   PAD
+    0x08004a7c   0x08004a7c   0x00000184   Code   RO         2360    i._fp_digits        mc_w.l(printfa.o)
+    0x08004c00   0x08004c00   0x000006dc   Code   RO         2361    i._printf_core      mc_w.l(printfa.o)
+    0x080052dc   0x080052dc   0x00000024   Code   RO         2362    i._printf_post_padding  mc_w.l(printfa.o)
+    0x08005300   0x08005300   0x0000002e   Code   RO         2363    i._printf_pre_padding  mc_w.l(printfa.o)
+    0x0800532e   0x0800532e   0x0000000a   Code   RO         2365    i._sputc            mc_w.l(printfa.o)
+    0x08005338   0x08005338   0x00000010   Data   RO         2104    .rodata.AHBPrescTable  system_stm32f4xx.o
+    0x08005348   0x08005348   0x00000ed8   Data   RO          420    .rodata.Font20_Table  stm32f429i_discovery_lcd.o
+    0x08006220   0x08006220   0x00001ab8   Data   RO          418    .rodata.Font24_Table  stm32f429i_discovery_lcd.o
+    0x08007cd8   0x08007cd8   0x00000004   Data   RO          283    .rodata.GPIO_PIN    stm32f429i_discovery.o
+    0x08007cdc   0x08007cdc   0x00000020   Data   RO         1805    .rodata.cst16       stm32f4xx_hal_tim.o
+    0x08007cfc   0x08007cfc   0x00000020   Data   RO         1184    .rodata.cst32       stm32f4xx_hal_ltdc.o
+    0x08007d1c   0x08007d1c   0x00000008   Data   RO          652    .rodata.cst8        stm32f4xx_hal_dma.o
+    0x08007d24   0x08007d24   0x0000000b   Data   RO           74    .rodata.str1.1      main.o
+    0x08007d2f   0x08007d2f   0x00000001   PAD
+    0x08007d30   0x08007d30   0x00000020   Data   RO         2437    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08007cf0, Size: 0x000007e8, Max: 0x00030000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08007d50, Size: 0x000007e8, Max: 0x00030000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20000000   0x08007cf0   0x00000004   Data   RW          284    .data.BUTTON_PORT   stm32f429i_discovery.o
-    0x20000004   0x08007cf4   0x00000008   Data   RW          421    .data.Font20        stm32f429i_discovery_lcd.o
-    0x2000000c   0x08007cfc   0x00000008   Data   RW          419    .data.Font24        stm32f429i_discovery_lcd.o
-    0x20000014   0x08007d04   0x00000008   Data   RW          282    .data.GPIO_PORT     stm32f429i_discovery.o
-    0x2000001c   0x08007d0c   0x00000004   Data   RW          288    .data.SpixTimeout   stm32f429i_discovery.o
-    0x20000020   0x08007d10   0x00000004   Data   RW         2103    .data.SystemCoreClock  system_stm32f4xx.o
-    0x20000024   0x08007d14   0x00000006   Data   RW           67    .data.VirtAddVarTab  main.o
-    0x2000002a   0x08007d1a   0x00000002   PAD
-    0x2000002c   0x08007d1c   0x00000038   Data   RW          145    .data.ili9341_drv   ili9341.o
-    0x20000064   0x08007d54   0x00000001   Data   RW          572    .data.uwTickFreq    stm32f4xx_hal.o
-    0x20000065   0x08007d55   0x00000003   PAD
-    0x20000068   0x08007d58   0x00000004   Data   RW          571    .data.uwTickPrio    stm32f4xx_hal.o
-    0x2000006c   0x08007d5c   0x00000004   PAD
+    0x20000000   0x08007d50   0x00000004   Data   RW          284    .data.BUTTON_PORT   stm32f429i_discovery.o
+    0x20000004   0x08007d54   0x00000008   Data   RW          421    .data.Font20        stm32f429i_discovery_lcd.o
+    0x2000000c   0x08007d5c   0x00000008   Data   RW          419    .data.Font24        stm32f429i_discovery_lcd.o
+    0x20000014   0x08007d64   0x00000008   Data   RW          282    .data.GPIO_PORT     stm32f429i_discovery.o
+    0x2000001c   0x08007d6c   0x00000004   Data   RW          288    .data.SpixTimeout   stm32f429i_discovery.o
+    0x20000020   0x08007d70   0x00000004   Data   RW         2103    .data.SystemCoreClock  system_stm32f4xx.o
+    0x20000024   0x08007d74   0x00000006   Data   RW           67    .data.VirtAddVarTab  main.o
+    0x2000002a   0x08007d7a   0x00000002   PAD
+    0x2000002c   0x08007d7c   0x00000038   Data   RW          145    .data.ili9341_drv   ili9341.o
+    0x20000064   0x08007db4   0x00000001   Data   RW          572    .data.uwTickFreq    stm32f4xx_hal.o
+    0x20000065   0x08007db5   0x00000003   PAD
+    0x20000068   0x08007db8   0x00000004   Data   RW          571    .data.uwTickPrio    stm32f4xx_hal.o
+    0x2000006c   0x08007dbc   0x00000004   PAD
     0x20000070        -       0x00000004   Zero   RW          432    .bss.ActiveLayer    stm32f429i_discovery_lcd.o
     0x20000074        -       0x00000001   Zero   RW          462    .bss.BSP_SDRAM_Init.sdramstatus  stm32f429i_discovery_sdram.o
-    0x20000075   0x08007d5c   0x00000003   PAD
+    0x20000075   0x08007dbc   0x00000003   PAD
     0x20000078        -       0x00000060   Zero   RW          466    .bss.BSP_SDRAM_MspInit.dmaHandle  stm32f429i_discovery_sdram.o
     0x200000d8        -       0x00000010   Zero   RW          465    .bss.Command        stm32f429i_discovery_sdram.o
     0x200000e8        -       0x00000002   Zero   RW          116    .bss.DataVar        hal_eeprom.o
-    0x200000ea   0x08007d5c   0x00000002   PAD
+    0x200000ea   0x08007dbc   0x00000002   PAD
     0x200000ec        -       0x00000040   Zero   RW          433    .bss.Dma2dHandler   stm32f429i_discovery_lcd.o
     0x2000012c        -       0x00000018   Zero   RW          431    .bss.DrawProp       stm32f429i_discovery_lcd.o
     0x20000144        -       0x00000002   Zero   RW           73    .bss.EEREAD         main.o
-    0x20000146   0x08007d5c   0x00000002   PAD
+    0x20000146   0x08007dbc   0x00000002   PAD
     0x20000148        -       0x00000014   Zero   RW          117    .bss.FlashErase_InitStructure  hal_eeprom.o
     0x2000015c        -       0x00000001   Zero   RW          115    .bss.HalStatus      hal_eeprom.o
     0x2000015d        -       0x00000001   Zero   RW           72    .bss.Hal_status     main.o
     0x2000015e        -       0x00000001   Zero   RW          289    .bss.Is_LCD_IO_Initialized  stm32f429i_discovery.o
-    0x2000015f   0x08007d5c   0x00000001   PAD
+    0x2000015f   0x08007dbc   0x00000001   PAD
     0x20000160        -       0x00000004   Zero   RW          430    .bss.LcdDrv         stm32f429i_discovery_lcd.o
     0x20000164        -       0x000000a8   Zero   RW          428    .bss.LtdcHandler    stm32f429i_discovery_lcd.o
     0x2000020c        -       0x00000002   Zero   RW           65    .bss.OC_Count       main.o
-    0x2000020e   0x08007d5c   0x00000002   PAD
+    0x2000020e   0x08007dbc   0x00000002   PAD
     0x20000210        -       0x00000030   Zero   RW          429    .bss.PeriphClkInitStruct  stm32f429i_discovery_lcd.o
     0x20000240        -       0x00000010   Zero   RW           70    .bss.Rng_Handle     main.o
     0x20000250        -       0x00000034   Zero   RW          463    .bss.SdramHandle    stm32f429i_discovery_sdram.o
@@ -4918,20 +4923,20 @@ Memory Map of the image
     0x20000328        -       0x00000048   Zero   RW           78    .bss.Tim4_Handle    main.o
     0x20000370        -       0x0000001c   Zero   RW           79    .bss.Tim4_OCInitStructure  main.o
     0x2000038c        -       0x00000002   Zero   RW           77    .bss.Tim4_PrescalerValue  main.o
-    0x2000038e   0x08007d5c   0x00000002   PAD
+    0x2000038e   0x08007dbc   0x00000002   PAD
     0x20000390        -       0x0000001c   Zero   RW          464    .bss.Timing         stm32f429i_discovery_sdram.o
     0x200003ac        -       0x00000001   Zero   RW           63    .bss.UBPressed      main.o
     0x200003ad        -       0x00000001   Zero   RW           66    .bss.cheat          main.o
     0x200003ae        -       0x00000001   Zero   RW           68    .bss.currState      main.o
-    0x200003af   0x08007d5c   0x00000001   PAD
+    0x200003af   0x08007dbc   0x00000001   PAD
     0x200003b0        -       0x00000004   Zero   RW          118    .bss.error          hal_eeprom.o
     0x200003b4        -       0x00000001   Zero   RW           64    .bss.extern_UBPressed  main.o
-    0x200003b5   0x08007d5c   0x00000003   PAD
+    0x200003b5   0x08007dbc   0x00000003   PAD
     0x200003b8        -       0x00000020   Zero   RW          799    .bss.pFlash         stm32f4xx_hal_flash.o
     0x200003d8        -       0x00000004   Zero   RW           71    .bss.random         main.o
     0x200003dc        -       0x00000004   Zero   RW           80    .bss.randomDelay    main.o
     0x200003e0        -       0x00000004   Zero   RW          573    .bss.uwTick         stm32f4xx_hal.o
-    0x200003e4   0x08007d5c   0x00000004   PAD
+    0x200003e4   0x08007dbc   0x00000004   PAD
     0x200003e8        -       0x00000400   Zero   RW         2089    STACK               startup_stm32f429xx.o
 
 
@@ -4944,7 +4949,7 @@ Image component sizes
 
       1018          0          0          0         27       5481   hal_eeprom.o
        698          0          0         56          0       5651   ili9341.o
-      1708        120          8          6        211      14189   main.o
+      1800        132         11          6        211      14412   main.o
         36          8        428          0       1024        932   startup_stm32f429xx.o
        982          0          4         16         89      16620   stm32f429i_discovery.o
       1354          0      10640         16        312      33086   stm32f429i_discovery_lcd.o
@@ -4971,9 +4976,9 @@ Image component sizes
         18          0         16          4          0       2810   system_stm32f4xx.o
 
     ----------------------------------------------------------------------
-     17078        140      11200        108       1916     317318   Object Totals
+     17170        152      11204        108       1916     317541   Object Totals
          0          0         32          0          0          0   (incl. Generated)
-        36          0          0          5         24          0   (incl. Padding)
+        36          0          1          5         24          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
@@ -5025,15 +5030,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     20784        242      11200        108       1916     317866   Grand Totals
-     20784        242      11200        108       1916     317866   ELF Image Totals
-     20784        242      11200        108          0          0   ROM Totals
+     20876        254      11204        108       1916     318089   Grand Totals
+     20876        254      11204        108       1916     318089   ELF Image Totals
+     20876        254      11204        108          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                31984 (  31.23kB)
+    Total RO  Size (Code + RO Data)                32080 (  31.33kB)
     Total RW  Size (RW Data + ZI Data)              2024 (   1.98kB)
-    Total ROM Size (Code + RO Data + RW Data)      32092 (  31.34kB)
+    Total ROM Size (Code + RO Data + RW Data)      32188 (  31.43kB)
 
 ==============================================================================
 

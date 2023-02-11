@@ -241,7 +241,7 @@ int main(void)
 	LCD_DisplayInt(10, 4, 2);
  	
 	//test EEPROM----
-	EE_WriteVariable(VirtAddVarTab[0], 300);
+	//EE_WriteVariable(VirtAddVarTab[0], 300);
 	LCD_DisplayInt(10, 7, 3);
 	
 	EE_ReadVariable(VirtAddVarTab[0], &EEREAD);	
@@ -675,21 +675,40 @@ void ScoreState(uint8_t cheat)
 	//Save current OC_Count (this is the reaction time in milliseconds)
 	uint32_t reactionTime = OC_Count;
 	
-	//Check if there is faster time in EEPROM
+	
+	
+	
 	//Updates EEPROM saved time if new time is faster
 	
 	//Display the reaction time on screen
 	LCD_DisplayString(12,1,(uint8_t *)"Reaction time ");
+	
+	
 	if (!cheat)
 	{
+		//Check if there is faster time in EEPROM
+		EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
+		uint8_t fastestTime = EEREAD;
+		if (reactionTime < EEREAD)
+		{
+			//The current reaction time is faster, update the EEPROM
+			EE_WriteVariable(VirtAddVarTab[0], reactionTime);
+			fastestTime = reactionTime;
+			
+		}
+		
 		LCD_DisplayInt(13, 1, reactionTime);
+		LCD_DisplayString(14,1,(uint8_t *)"Fastest time ");
 		LCD_DisplayString(13,4, (uint8_t *)"ms");
+		LCD_DisplayInt(15,1, fastestTime);
+		LCD_DisplayString(15,4, (uint8_t *)"ms");
 	}
 	
 	else
 	{
 		LCD_DisplayString(13,1, (uint8_t *)"You cheated :(");
 	}
+	
 	
 	
 }
