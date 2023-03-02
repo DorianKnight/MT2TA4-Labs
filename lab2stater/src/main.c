@@ -671,7 +671,7 @@ void WaitState()
 	random &= 0x000007FF;
 	__HAL_TIM_SET_COUNTER(&Tim4_Handle, 0x0000); //Clear the counter
 	OC_Count = 0; //Clear the OC count to ensure that previous overflows don't shorten the waiting delay
-	randomDelay = 2000 + random; // Set the delay to 2 seconds + 0-2.027 seconds
+	randomDelay = 2000 + random; // Set the delay to 2 seconds + 0-2.047 seconds
 }
 
 void ReactionState()
