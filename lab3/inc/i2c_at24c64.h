@@ -45,6 +45,16 @@ void I2C_Error(I2C_HandleTypeDef * pI2c3_Handle);
 
 
 
+
+
+
+
+
+
+
+
+
+
 #ifdef __cplusplus
 	extern "C" {
 #endif

@@ -2,7 +2,7 @@
 
 /**
  * Initializes (by default) I2C1 on pins PB(7,5,6)->(SCL,SDA,SMBA) as set in the header file.
- * To change the configuration to another port of I2C please refer to the datasheet to set the correct
+ * To change the configuration to another port or I2C please refer to the datasheet to set the correct
  * pins and alternate functions.
  **/
 

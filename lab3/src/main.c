@@ -30,7 +30,9 @@ This starter kit:
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "stm32f4xx_hal.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 /** @addtogroup STM32F4xx_HAL_Examples
   * @{
@@ -46,7 +48,6 @@ This starter kit:
 #define COLUMN(x) ((x) * (((sFONT *)BSP_LCD_GetFont())->Width))    //see font.h, for defining LINE(X)
 
 
-
 /* Private macro -------------------------------------------------------------*/
 
  
@@ -58,7 +59,9 @@ RTC_HandleTypeDef RTCHandle;
 RTC_DateTypeDef RTC_DateStructure, read_RTC_DateStruct;
 RTC_TimeTypeDef RTC_TimeStructure, read_RTC_TimeStruct;
 
-
+//State machine flags
+uint8_t updateTime  = 0;
+uint8_t userButtonPressed = 0;
 
 HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
 
@@ -86,8 +89,7 @@ static void Error_Handler(void);
   * @retval None
   */
 int main(void)
-{
-  //the following variables are for testging I2C_EEPROM
+{//the following variables are for testging I2C_EEPROM
 
 	uint8_t data1 =0x67,  data2=0x68;
 	uint8_t readData=0x00;
@@ -97,6 +99,7 @@ int main(void)
 	uint8_t readMatch=1;
 	uint32_t EE_status;
 
+	BSP_LED_Init(LED4);
 	
 	/* STM32F4xx HAL library initialization:
        - Configure the Flash prefetch, instruction and Data caches
@@ -226,19 +229,19 @@ int main(void)
 		LCD_DisplayString(1, 0, (uint8_t *)"Testing RTC...");
 	
 	
-		RTC_DateStructure.Month=11;
-		RTC_DateStructure.WeekDay=1;   //what will happen if the date/weekday is not correct?
-		RTC_DateStructure.Date=11;
-		RTC_DateStructure.Year=11; //2012???  how about 1912?
-		
-		HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN);
-	
-	
-		RTC_TimeStructure.Hours=11;
-		RTC_TimeStructure.Minutes=11;   
-		RTC_TimeStructure.Seconds=11;
-		
-		HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN);
+////		RTC_DateStructure.Month=11;
+////		RTC_DateStructure.WeekDay=1;   //what will happen if the date/weekday is not correct?
+////		RTC_DateStructure.Date=11;
+////		RTC_DateStructure.Year=11; //2012???  how about 1912?
+////		
+////		HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN);
+////	
+////	
+////		RTC_TimeStructure.Hours=11;
+////		RTC_TimeStructure.Minutes=11;   
+////		RTC_TimeStructure.Seconds=11;
+////		
+////		HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN);
 	
 		
 		//Read from RTC
@@ -247,7 +250,7 @@ int main(void)
 		//NOTE from the UM1725 : You must call HAL_RTC_GetDate() after HAL_RTC_GetTime() to unlock the values in the higher order 
 		//calendar shadow register ....		
 	
-		LCD_DisplayString(3,0, (uint8_t *) "HH:MM:SS");
+    LCD_DisplayString(3,0, (uint8_t *) "HH:MM:SS");
 	
 		LCD_DisplayInt(4,0,read_RTC_TimeStruct.Hours);
 		LCD_DisplayInt(4,3,read_RTC_TimeStruct.Minutes);
@@ -259,14 +262,38 @@ int main(void)
 		LCD_DisplayInt(7,3, read_RTC_DateStruct.Date);
 		LCD_DisplayInt(7,6, read_RTC_DateStruct.Month);
 		LCD_DisplayInt(7,9, read_RTC_DateStruct.Year);
- 
-	
+
+		BSP_LCD_Clear(LCD_COLOR_WHITE);
+		//HAL_Delay(10);
 	
 	/* Infinite loop */
 while (1)
-  {			
-	
+  {
+		HAL_Delay(1);
+		if(updateTime)
+		{
+			//Idle state: Display the current time
+			//This state gets triggered once a second due to the RTC alarm interrupt
+			
+			LCD_DisplayString(0,0, (uint8_t *) "Real Time Clock");
+			//Clear the top lines so they can be written to again
+			BSP_LCD_ClearStringLine(0);
+			BSP_LCD_ClearStringLine(1);
 		
+			//Read from RTC
+			HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+			HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN);
+		
+			LCD_DisplayString(0,0, (uint8_t *) "Real Time Clock");
+			LCD_DisplayInt(1,0, read_RTC_TimeStruct.Hours);
+			LCD_DisplayString(1,2, (uint8_t *) ":");
+			LCD_DisplayInt(1,3, read_RTC_TimeStruct.Minutes);
+			LCD_DisplayString(1,5, (uint8_t *) ":");
+			LCD_DisplayInt(1,6, read_RTC_TimeStruct.Seconds);		
+			
+			//Reset the flag
+			updateTime = 0;	
+		}
 		
 		
   } //end of while
@@ -498,7 +525,7 @@ void RTC_Config(void) {
 			__HAL_RTC_TAMPER2_DISABLE(&RTCHandle);	
 				//Optionally, a tamper event can cause a timestamp to be recorded. ---P802 of RM0090
 				//Timestamp on tamper event
-				//With TAMPTS set to ‘1 , any tamper event causes a timestamp to occur. In this case, either
+				//With TAMPTS set to ?1 , any tamper event causes a timestamp to occur. In this case, either
 				//the TSF bit or the TSOVF bit are set in RTC_ISR, in the same manner as if a normal
 				//timestamp event occurs. The affected tamper flag register (TAMP1F, TAMP2F) is set at the
 				//same time that TSF or TSOVF is set. ---P802, about Tamper detection
@@ -514,6 +541,7 @@ void RTC_Config(void) {
 			//calendar, which means that the calendar registers have been correctly copied into the
 			//RTC_TR and RTC_DR shadow registers.The HAL_RTC_WaitForSynchro() function
 			//implements the above software sequence (RSF clear and RSF check).	
+			
 }
 
 
@@ -530,16 +558,16 @@ void RTC_AlarmAConfig(void)
 				//the other three fieds are: RTC_AlarmTime(for when to occur), 
 				//RTC_AlarmDateWeekDaySel (to use RTC_AlarmDateWeekDaySel_Date or RTC_AlarmDateWeekDaySel_WeekDay
 				//RTC_AlarmDateWeekDay (0-31, or RTC_Weekday_Monday, RTC_Weekday_Tuesday...., depends on the value of AlarmDateWeekDaySel)	
-	//RTC_Alarm_Structure.AlarmDateWeekDay = RTC_WEEKDAY_MONDAY;
-  //RTC_Alarm_Structure.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
-  //RTC_Alarm_Structure.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+//	RTC_Alarm_Structure.AlarmDateWeekDay = RTC_WEEKDAY_MONDAY;
+//  RTC_Alarm_Structure.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+//  RTC_Alarm_Structure.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
 		   //RTC_ALARMSUBSECONDMASK_ALL --> All Alarm SS fields are masked. 
         //There is no comparison on sub seconds for Alarm 
 			
-  //RTC_Alarm_Structure.AlarmTime.Hours = 0x02;
-  //RTC_Alarm_Structure.AlarmTime.Minutes = 0x20;
-  //RTC_Alarm_Structure.AlarmTime.Seconds = 0x30;
-  //RTC_Alarm_Structure.AlarmTime.SubSeconds = 0x56;
+//  RTC_Alarm_Structure.AlarmTime.Hours = 0x02;
+//  RTC_Alarm_Structure.AlarmTime.Minutes = 0x20;
+//  RTC_Alarm_Structure.AlarmTime.Seconds = 0x30;
+//  RTC_Alarm_Structure.AlarmTime.SubSeconds = 0x56;
   
   if(HAL_RTC_SetAlarm_IT(&RTCHandle,&RTC_Alarm_Structure,RTC_FORMAT_BCD) != HAL_OK)
   {
@@ -566,54 +594,54 @@ void RTC_AlarmAConfig(void)
 }
 
 
-HAL_StatusTypeDef  RTC_AlarmA_IT_Disable(RTC_HandleTypeDef *hrtc) 
+HAL_StatusTypeDef  RTC_AlarmA_IT_Disable(RTC_HandleTypeDef *RTCHandle) 
 { 
  	// Process Locked  
-	__HAL_LOCK(hrtc);
+	__HAL_LOCK(RTCHandle);
   
-  hrtc->State = HAL_RTC_STATE_BUSY;
+  RTCHandle->State = HAL_RTC_STATE_BUSY;
   
   // Disable the write protection for RTC registers 
-  __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
+  __HAL_RTC_WRITEPROTECTION_DISABLE(RTCHandle);
   
-  // __HAL_RTC_ALARMA_DISABLE(hrtc);
+  // __HAL_RTC_ALARMA_DISABLE(RTCHandle);
     
    // In case of interrupt mode is used, the interrupt source must disabled 
-   __HAL_RTC_ALARM_DISABLE_IT(hrtc, RTC_IT_ALRA);
+   __HAL_RTC_ALARM_DISABLE_IT(RTCHandle, RTC_IT_ALRA);
 
 
  // Enable the write protection for RTC registers 
-  __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  __HAL_RTC_WRITEPROTECTION_ENABLE(RTCHandle);
   
-  hrtc->State = HAL_RTC_STATE_READY; 
+  RTCHandle->State = HAL_RTC_STATE_READY; 
   
   // Process Unlocked 
-  __HAL_UNLOCK(hrtc);  
+  __HAL_UNLOCK(RTCHandle);  
 }
 
 
-HAL_StatusTypeDef  RTC_AlarmA_IT_Enable(RTC_HandleTypeDef *hrtc) 
+HAL_StatusTypeDef  RTC_AlarmA_IT_Enable(RTC_HandleTypeDef *RTCHandle) 
 {	
 	// Process Locked  
-	__HAL_LOCK(hrtc);	
-  hrtc->State = HAL_RTC_STATE_BUSY;
+	__HAL_LOCK(RTCHandle);	
+  RTCHandle->State = HAL_RTC_STATE_BUSY;
   
   // Disable the write protection for RTC registers 
-  __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
+  __HAL_RTC_WRITEPROTECTION_DISABLE(RTCHandle);
   
-  // __HAL_RTC_ALARMA_ENABLE(hrtc);
+  // __HAL_RTC_ALARMA_ENABLE(RTCHandle);
     
    // In case of interrupt mode is used, the interrupt source must disabled 
-   __HAL_RTC_ALARM_ENABLE_IT(hrtc, RTC_IT_ALRA);
+   __HAL_RTC_ALARM_ENABLE_IT(RTCHandle, RTC_IT_ALRA);
 
 
  // Enable the write protection for RTC registers 
-  __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+  __HAL_RTC_WRITEPROTECTION_ENABLE(RTCHandle);
   
-  hrtc->State = HAL_RTC_STATE_READY; 
+  RTCHandle->State = HAL_RTC_STATE_READY; 
   
   // Process Unlocked 
-  __HAL_UNLOCK(hrtc);  
+  __HAL_UNLOCK(RTCHandle);  
 
 }
 
@@ -669,7 +697,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
   if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
   {
-		
+		//Set the flag
+		userButtonPressed = 1;
   }
 	
 	
@@ -691,15 +720,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 
-
-
-void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *RTCHandle)
 {
- 
-	//RTC_TimeShow();
+// 
+//	RTC_TimeShow();
+//	
 	
+	BSP_LED_Toggle(LED4);
+	
+	//Set the update time flag
+	updateTime = 1;
 }
-
 
 
 
@@ -746,5 +777,3 @@ void assert_failed(uint8_t* file, uint32_t line)
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

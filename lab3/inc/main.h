@@ -40,13 +40,17 @@
 #define __MAIN_H
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>   
+#include <stdio.h>   //to fix the warning for function sprintf() --declare implicitly
 #include "stm32f429i_discovery.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f429i_discovery_lcd.h"
+//#include "stm32f429i_discovery_eeprom.h"
 #include "i2c_at24c64.h"
 
 #define EEPROM_ADDRESS  0xA0
+
+
+
 
 extern RTC_InitTypeDef RTC_InitStructure;
 extern RTC_TimeTypeDef RTC_TimeStructure;
@@ -57,6 +61,7 @@ extern RTC_DateTypeDef RTC_DateStructure;
 extern __IO uint16_t memLocation;
 
 void RTC_Config(void);
+
 
 void LCD_DisplayString(uint16_t LineNumber, uint16_t ColumnNumber, uint8_t *ptr);
 void LCD_DisplayInt(uint16_t LineNumber, uint16_t ColumnNumber, int Number);

@@ -55,6 +55,20 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+extern RTC_HandleTypeDef RTCHandle;
+
+
+
+
+
+
+
+
+/* Private function prototypes -----------------------------------------------*/
+/* Private functions ---------------------------------------------------------*/
+
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -175,8 +189,7 @@ void SysTick_Handler(void)
   */
 void EXTI0_IRQHandler(void)
 {
-
-	HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN); // defined as GPIO_PIN_0 in _discovery.h
+  HAL_GPIO_EXTI_IRQHandler(KEY_BUTTON_PIN); // defined as GPIO_PIN_0 in _discovery.h
 	
 	
 }
@@ -228,14 +241,14 @@ void I2C3_ER_IRQHandler(void)
 
 void RTC_Alarm_IRQHandler(void)
 {
-  //HAL_RTC_AlarmIRQHandler(&RTCHandle);
+  HAL_RTC_AlarmIRQHandler(&RTCHandle);
 	
 }
 
 void TAMP_STAMP_IRQHandler(void)
 {
 	//BSP_LED_Toggle(LED4);
-	//HAL_RTCEx_TamperTimeStampIRQHandler(&RTCHandle);
+//	HAL_RTCEx_TamperTimeStampIRQHandler(&RTCHandle);
 	
 }
 
