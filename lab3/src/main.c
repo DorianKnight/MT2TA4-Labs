@@ -62,6 +62,9 @@ RTC_TimeTypeDef RTC_TimeStructure, read_RTC_TimeStruct;
 //State machine flags
 uint8_t updateTime  = 0;
 uint8_t userButtonPressed = 0;
+uint8_t userButtonHeld = 0;
+uint8_t holdCounter = 0;
+uint8_t dateDisplayed = 0;
 
 HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
 
@@ -141,7 +144,7 @@ int main(void)
 
 //*********************Testing I2C EEPROM------------------
 
-	LCD_DisplayString(4, 2, (uint8_t *)"MT2TA4 LAB 3");
+	/*LCD_DisplayString(4, 2, (uint8_t *)"MT2TA4 LAB 3");
 	LCD_DisplayString(6, 0, (uint8_t *)"Testing I2C & EEPROM....");
 		
 	HAL_Delay(2000);   //display for 1 second
@@ -212,7 +215,7 @@ int main(void)
 	else 
 				LCD_DisplayString(15, 0, (uint8_t *)"rd EE buffer OK");
 
-	HAL_Delay(2000);  //display for 4 seconds
+	HAL_Delay(2000);  //display for 4 seconds*/
 
 	
 	
@@ -223,10 +226,10 @@ int main(void)
 	
 	
  //test realtime clock	
-    BSP_LCD_Clear(LCD_COLOR_WHITE);
-		HAL_Delay(10);   
+//    BSP_LCD_Clear(LCD_COLOR_WHITE);
+//		HAL_Delay(10);   
 		//otherwise, the following line will have trouble to display. 1. while cannot delay too long.??? 
-		LCD_DisplayString(1, 0, (uint8_t *)"Testing RTC...");
+//		LCD_DisplayString(1, 0, (uint8_t *)"Testing RTC...");
 	
 	
 ////		RTC_DateStructure.Month=11;
@@ -245,23 +248,23 @@ int main(void)
 	
 		
 		//Read from RTC
-		HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
-		HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); 
+//		HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+//		HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); 
 		//NOTE from the UM1725 : You must call HAL_RTC_GetDate() after HAL_RTC_GetTime() to unlock the values in the higher order 
 		//calendar shadow register ....		
 	
-    LCD_DisplayString(3,0, (uint8_t *) "HH:MM:SS");
+//    LCD_DisplayString(3,0, (uint8_t *) "HH:MM:SS");
 	
-		LCD_DisplayInt(4,0,read_RTC_TimeStruct.Hours);
-		LCD_DisplayInt(4,3,read_RTC_TimeStruct.Minutes);
-		LCD_DisplayInt(4,6,read_RTC_TimeStruct.Seconds);
+//		LCD_DisplayInt(4,0,read_RTC_TimeStruct.Hours);
+//		LCD_DisplayInt(4,3,read_RTC_TimeStruct.Minutes);
+//		LCD_DisplayInt(4,6,read_RTC_TimeStruct.Seconds);
 
-		LCD_DisplayString(6,0, (uint8_t *) "WD:DD:MM:YY");
+//		LCD_DisplayString(6,0, (uint8_t *) "WD:DD:MM:YY");
 	
-		LCD_DisplayInt(7,0, read_RTC_DateStruct.WeekDay);
-		LCD_DisplayInt(7,3, read_RTC_DateStruct.Date);
-		LCD_DisplayInt(7,6, read_RTC_DateStruct.Month);
-		LCD_DisplayInt(7,9, read_RTC_DateStruct.Year);
+//		LCD_DisplayInt(7,0, read_RTC_DateStruct.WeekDay);
+//		LCD_DisplayInt(7,3, read_RTC_DateStruct.Date);
+//		LCD_DisplayInt(7,6, read_RTC_DateStruct.Month);
+//		LCD_DisplayInt(7,9, read_RTC_DateStruct.Year);
 
 		BSP_LCD_Clear(LCD_COLOR_WHITE);
 		//HAL_Delay(10);
@@ -269,13 +272,13 @@ int main(void)
 	/* Infinite loop */
 while (1)
   {
-		HAL_Delay(1);
+		
+		HAL_Delay(10); //The display won't start unless this delay is here
 		if(updateTime)
 		{
 			//Idle state: Display the current time
 			//This state gets triggered once a second due to the RTC alarm interrupt
 			
-			LCD_DisplayString(0,0, (uint8_t *) "Real Time Clock");
 			//Clear the top lines so they can be written to again
 			BSP_LCD_ClearStringLine(0);
 			BSP_LCD_ClearStringLine(1);
@@ -291,8 +294,91 @@ while (1)
 			LCD_DisplayString(1,5, (uint8_t *) ":");
 			LCD_DisplayInt(1,6, read_RTC_TimeStruct.Seconds);		
 			
+			//Check to see if the user button is being held
+			if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) && holdCounter <3)
+			{
+				holdCounter++;
+				if (holdCounter == 3)
+				{
+					//The button has been held for 3 seconds, set the flag to display the date
+					userButtonHeld = 1;
+				}
+			}
+			
 			//Reset the flag
 			updateTime = 0;	
+		}
+		
+		else if(userButtonPressed) //I used else if because sometimes the real time clock skips a second when I use if. Else if removes that problem
+		{
+			//Move the second last button push time three memory spaces to make room for the new time
+			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+3 , readData);
+			
+			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+1);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+4 , readData);
+			
+			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+5 , readData);
+			
+			//Get current time from RTC and save the user btton push time in EEPROM
+			HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation , read_RTC_TimeStruct.Hours);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+1 , read_RTC_TimeStruct.Minutes);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2 , read_RTC_TimeStruct.Seconds);
+			
+			//Clear lines used to display information
+			BSP_LCD_ClearStringLine(4);
+			BSP_LCD_ClearStringLine(5);
+			
+			//Print last push time to LCD display
+			LCD_DisplayString(4,0, (uint8_t *) "Lastest press");
+			LCD_DisplayInt(5,0, read_RTC_TimeStruct.Hours);
+			LCD_DisplayString(5,2, (uint8_t *) ":");
+			LCD_DisplayInt(5,3, read_RTC_TimeStruct.Minutes);
+			LCD_DisplayString(5,5, (uint8_t *) ":");
+			LCD_DisplayInt(5,6, read_RTC_TimeStruct.Seconds);
+			
+			userButtonPressed = 0;
+		}
+		
+		else if (userButtonHeld)
+		{
+			if (!dateDisplayed) //This is to limit the number of times the screen is updated to reduce the visual noise when updates happen
+			{
+				//Get date
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+				
+				//Clear lines
+				BSP_LCD_ClearStringLine(2);
+				
+				
+				//Display the date
+				LCD_DisplayInt(2,0, read_RTC_DateStruct.Date);
+				LCD_DisplayString(2,2, (uint8_t *) ":");
+				LCD_DisplayInt(2,3, read_RTC_DateStruct.Month);
+				LCD_DisplayString(2,5, (uint8_t *) ":");
+				LCD_DisplayInt(2,6, read_RTC_DateStruct.Year);
+				
+				//Update flag
+				dateDisplayed = 1;
+			}
+			
+			
+			//Check if the button is still being held - if not, reset the flag
+			if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==0)
+			{
+				//Reset the flags and iterater
+				userButtonHeld = 0;
+				dateDisplayed = 0;
+				holdCounter = 0;
+				
+				//Clear the date off of the screen
+				BSP_LCD_ClearStringLine(2);
+			}
+			
+			
 		}
 		
 		
