@@ -65,6 +65,8 @@ uint8_t userButtonPressed = 0;
 uint8_t userButtonHeld = 0;
 uint8_t holdCounter = 0;
 uint8_t dateDisplayed = 0;
+uint8_t displayLastTwoPresses = 0;
+uint8_t timeDisplayed = 0;
 
 HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
 
@@ -223,7 +225,7 @@ int main(void)
 	RTC_Config();
 		
 	RTC_AlarmAConfig();
-	
+	ExtBtn1_Config();
 	
  //test realtime clock	
 //    BSP_LCD_Clear(LCD_COLOR_WHITE);
@@ -377,8 +379,56 @@ while (1)
 				//Clear the date off of the screen
 				BSP_LCD_ClearStringLine(2);
 			}
+		}
+		
+		else if(displayLastTwoPresses)
+		{
+			//The external button has been pushed - show the last two times the user button has been pushed
 			
+			//Check if already displayed - if displayed don't write to the screen again
+			if (!timeDisplayed)
+			{
+				//Set the flag
+				timeDisplayed = 1;
+				
+				//Read from EEPROM
+				uint8_t firstHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
+				uint8_t firstMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+1);
+				uint8_t firstSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2);
+				
+				uint8_t secondHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+3);
+				uint8_t secondMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+4);
+				uint8_t secondSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+5);
+				
+				//Display to LCD
+				LCD_DisplayString(8,0, (uint8_t *) "Last Two");
+				LCD_DisplayString(9,0, (uint8_t *) "Latest:");
+				LCD_DisplayInt(9,8,firstHours);
+				LCD_DisplayString(9,10,(uint8_t *)":");
+				LCD_DisplayInt(9,11,firstMinutes);
+				LCD_DisplayString(9,13,(uint8_t *)":");
+				LCD_DisplayInt(9,14,firstSeconds);
+				
+				LCD_DisplayString(10,0, (uint8_t *) "2nd:");
+				LCD_DisplayInt(10,8,secondHours);
+				LCD_DisplayString(10,10,(uint8_t *)":");
+				LCD_DisplayInt(10,11,secondMinutes);
+				LCD_DisplayString(10,13,(uint8_t *)":");
+				LCD_DisplayInt(10,14,secondSeconds);
+			}
 			
+		}
+		
+		else if (displayLastTwoPresses == 0 && timeDisplayed == 1)
+		{
+			//This means that the flag has been toggled off but the screen has not been cleared yet
+			BSP_LCD_ClearStringLine(8);
+			BSP_LCD_ClearStringLine(9);
+			BSP_LCD_ClearStringLine(10);
+			BSP_LCD_ClearStringLine(11);
+			
+			//Reset the flag
+			timeDisplayed = 0;
 		}
 		
 		
@@ -790,6 +840,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	if(GPIO_Pin == GPIO_PIN_1)
   {
+		//Toggle the flag
+		if (displayLastTwoPresses == 0)
+		{
+			displayLastTwoPresses = 1;
+		}
+		
+		else
+		{
+			displayLastTwoPresses = 0;
+		}
 		
 			
 
