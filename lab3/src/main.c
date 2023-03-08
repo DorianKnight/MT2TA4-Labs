@@ -67,6 +67,9 @@ uint8_t holdCounter = 0;
 uint8_t dateDisplayed = 0;
 uint8_t displayLastTwoPresses = 0;
 uint8_t timeDisplayed = 0;
+uint8_t setTimeDateFlag = 0;
+uint8_t extBtnPushed = 0;
+uint8_t changedTimeShown = 0;
 
 HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
 
@@ -226,6 +229,7 @@ int main(void)
 		
 	RTC_AlarmAConfig();
 	ExtBtn1_Config();
+	ExtBtn2_Config();
 	
  //test realtime clock	
 //    BSP_LCD_Clear(LCD_COLOR_WHITE);
@@ -276,7 +280,7 @@ while (1)
   {
 		
 		HAL_Delay(10); //The display won't start unless this delay is here
-		if(updateTime)
+		if(updateTime && setTimeDateFlag == 0)
 		{
 			//Idle state: Display the current time
 			//This state gets triggered once a second due to the RTC alarm interrupt
@@ -311,7 +315,7 @@ while (1)
 			updateTime = 0;	
 		}
 		
-		else if(userButtonPressed) //I used else if because sometimes the real time clock skips a second when I use if. Else if removes that problem
+		else if(userButtonPressed && setTimeDateFlag == 0) //I used else if because sometimes the real time clock skips a second when I use if. Else if removes that problem
 		{
 			//Move the second last button push time three memory spaces to make room for the new time
 			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
@@ -344,7 +348,7 @@ while (1)
 			userButtonPressed = 0;
 		}
 		
-		else if (userButtonHeld)
+		else if (userButtonHeld && setTimeDateFlag == 0)
 		{
 			if (!dateDisplayed) //This is to limit the number of times the screen is updated to reduce the visual noise when updates happen
 			{
@@ -431,7 +435,247 @@ while (1)
 			timeDisplayed = 0;
 		}
 		
-		
+		switch (setTimeDateFlag)
+		{
+			case 1:
+				//Set hours
+				
+				//Get the current time
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				if (extBtnPushed && read_RTC_TimeStruct.Hours <99)
+				{
+					RTC_TimeStructure.Hours = read_RTC_TimeStruct.Hours + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_TimeStruct.Hours == 99)
+				{
+					//Overflow case
+					RTC_TimeStructure.Hours = 0;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current time to the screen
+					BSP_LCD_ClearStringLine(1);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					LCD_DisplayInt(1,0, read_RTC_TimeStruct.Hours);
+					LCD_DisplayString(1,2, (uint8_t *) ":");
+					LCD_DisplayInt(1,3, read_RTC_TimeStruct.Minutes);
+					LCD_DisplayString(1,5, (uint8_t *) ":");
+					LCD_DisplayInt(1,6, read_RTC_TimeStruct.Seconds);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Hours");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}
+				break;
+			
+			case 2:
+				//Set minutes
+				//Get the current time
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				if (extBtnPushed && read_RTC_TimeStruct.Minutes <59)
+				{
+					RTC_TimeStructure.Minutes = read_RTC_TimeStruct.Minutes + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_TimeStruct.Minutes == 60)
+				{
+					//Overflow case
+					RTC_TimeStructure.Minutes = 0;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current time to the screen
+					BSP_LCD_ClearStringLine(1);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					LCD_DisplayInt(1,0, read_RTC_TimeStruct.Hours);
+					LCD_DisplayString(1,2, (uint8_t *) ":");
+					LCD_DisplayInt(1,3, read_RTC_TimeStruct.Minutes);
+					LCD_DisplayString(1,5, (uint8_t *) ":");
+					LCD_DisplayInt(1,6, read_RTC_TimeStruct.Seconds);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Minutes");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}	
+			break;
+			
+			case 3:
+				//Set seconds
+				//Get the current time
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				if (extBtnPushed && read_RTC_TimeStruct.Seconds <59)
+				{
+					RTC_TimeStructure.Seconds = read_RTC_TimeStruct.Seconds + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_TimeStruct.Seconds == 59)
+				{
+					RTC_TimeStructure.Seconds = 0;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetTime(&RTCHandle, &RTC_TimeStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current time to the screen
+					BSP_LCD_ClearStringLine(1);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					LCD_DisplayInt(1,0, read_RTC_TimeStruct.Hours);
+					LCD_DisplayString(1,2, (uint8_t *) ":");
+					LCD_DisplayInt(1,3, read_RTC_TimeStruct.Minutes);
+					LCD_DisplayString(1,5, (uint8_t *) ":");
+					LCD_DisplayInt(1,6, read_RTC_TimeStruct.Seconds);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Seconds");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}	
+			break;
+			
+			case 4:
+				//Set days
+			
+				//Get the current day
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+				if (extBtnPushed && read_RTC_DateStruct.Date <31)
+				{
+					RTC_DateStructure.Date = read_RTC_DateStruct.Date + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_DateStruct.Date == 31)
+				{
+					RTC_DateStructure.Date = 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current Date to the screen
+					BSP_LCD_ClearStringLine(2);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+					LCD_DisplayInt(2,0, read_RTC_DateStruct.Date);
+					LCD_DisplayString(2,2, (uint8_t *) ":");
+					LCD_DisplayInt(2,3, read_RTC_DateStruct.Month);
+					LCD_DisplayString(2,5, (uint8_t *) ":");
+					LCD_DisplayInt(2,6, read_RTC_DateStruct.Year);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Date");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}	
+			break;
+			
+			case 5:
+				//Set months
+			
+				//Get the current month
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+				if (extBtnPushed && read_RTC_DateStruct.Month <12)
+				{
+					RTC_DateStructure.Month = read_RTC_DateStruct.Month + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_DateStruct.Month == 12)
+				{
+					RTC_DateStructure.Month = 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current Date to the screen
+					BSP_LCD_ClearStringLine(2);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+					LCD_DisplayInt(2,0, read_RTC_DateStruct.Date);
+					LCD_DisplayString(2,2, (uint8_t *) ":");
+					LCD_DisplayInt(2,3, read_RTC_DateStruct.Month);
+					LCD_DisplayString(2,5, (uint8_t *) ":");
+					LCD_DisplayInt(2,6, read_RTC_DateStruct.Year);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Month");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}	
+			break;
+			
+			case 6:
+				//Set years
+				//Get the current day
+				HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+				HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+				if (extBtnPushed && read_RTC_DateStruct.Year <99)
+				{
+					RTC_DateStructure.Year = read_RTC_DateStruct.Year + 1;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				else if (extBtnPushed && read_RTC_DateStruct.Year == 99)
+				{
+					RTC_DateStructure.Year = 0;
+					extBtnPushed = 0; //Reset the flag
+					HAL_RTC_SetDate(&RTCHandle, &RTC_DateStructure, RTC_FORMAT_BIN); //Set the time
+					changedTimeShown = 0; //Time has been updated - change the display
+				}
+				
+				if(!changedTimeShown)
+				{
+					//Display the current Date to the screen
+					BSP_LCD_ClearStringLine(2);
+					BSP_LCD_ClearStringLine(13);
+					//Read from RTC
+					HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+					HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+					LCD_DisplayInt(2,0, read_RTC_DateStruct.Date);
+					LCD_DisplayString(2,2, (uint8_t *) ":");
+					LCD_DisplayInt(2,3, read_RTC_DateStruct.Month);
+					LCD_DisplayString(2,5, (uint8_t *) ":");
+					LCD_DisplayInt(2,6, read_RTC_DateStruct.Year);
+					LCD_DisplayString(13,0, (uint8_t *) "Changing Year");
+					
+					//Update the flag
+					changedTimeShown = 1;
+				}	
+			break;
+		}
   } //end of while
 
 
@@ -550,12 +794,21 @@ void ExtBtn1_Config(void)     // for GPIO C pin 1
 
 void ExtBtn2_Config(void){  //**********PD2.***********
 
-	//
-	
-	
-	
-	
-	
+	GPIO_InitTypeDef   GPIO_InitStructure;
+
+  /* Enable GPIOD clock */
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  
+  /* Configure PD2 pin as input floating */
+  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
+  GPIO_InitStructure.Pull =GPIO_PULLUP;
+  GPIO_InitStructure.Pin = GPIO_PIN_2;
+	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
+	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_2);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
+																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
   // Enable and set EXTI Line0 Interrupt to the lowest priority 
   HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 1);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
@@ -840,15 +1093,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	
 	if(GPIO_Pin == GPIO_PIN_1)
   {
-		//Toggle the flag
-		if (displayLastTwoPresses == 0)
+		if(setTimeDateFlag == 0)
 		{
-			displayLastTwoPresses = 1;
+			//Currently not setting time or date
+			
+			//Toggle the flag
+			if (displayLastTwoPresses == 0)
+			{
+				displayLastTwoPresses = 1;
+			}
+			
+			else
+			{
+				displayLastTwoPresses = 0;
+			}
 		}
 		
 		else
 		{
-			displayLastTwoPresses = 0;
+			extBtnPushed = 1;
 		}
 		
 			
@@ -857,7 +1120,36 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 	if(GPIO_Pin == GPIO_PIN_2)
   {
-
+		setTimeDateFlag++;
+		
+		//Reset the flag
+		changedTimeShown = 0;
+		
+		if (setTimeDateFlag > 6)
+		{
+			setTimeDateFlag = 0;
+			BSP_LCD_ClearStringLine(2); //Removes date
+			BSP_LCD_ClearStringLine(13); //Removes the "changing ..." line
+			__HAL_RCC_RTC_ENABLE(); // Restart the clock
+			LCD_DisplayString(14,2, (uint8_t *) "GOT HERE");
+			
+		}
+		
+		if (setTimeDateFlag == 1)
+		{
+			__HAL_RCC_RTC_DISABLE(); // Pause the clock
+			
+			//Read from RTC
+			HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
+			HAL_RTC_GetDate(&RTCHandle, &read_RTC_DateStruct, RTC_FORMAT_BIN); //In the starter code it says that we have to call the date after the time
+			LCD_DisplayInt(2,0, read_RTC_DateStruct.Date);
+			LCD_DisplayString(2,2, (uint8_t *) ":");
+			LCD_DisplayInt(2,3, read_RTC_DateStruct.Month);
+			LCD_DisplayString(2,5, (uint8_t *) ":");
+			LCD_DisplayInt(2,6, read_RTC_DateStruct.Year);
+			
+			
+		}
 		
 	} //end of if PIN_2	
 	
