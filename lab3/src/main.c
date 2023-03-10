@@ -70,6 +70,9 @@ uint8_t timeDisplayed = 0;
 uint8_t setTimeDateFlag = 0;
 uint8_t extBtnPushed = 0;
 uint8_t changedTimeShown = 0;
+uint8_t numOfSavedVals;
+
+
 
 HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
 
@@ -108,6 +111,8 @@ int main(void)
 	uint32_t EE_status;
 
 	BSP_LED_Init(LED4);
+	
+	
 	
 	/* STM32F4xx HAL library initialization:
        - Configure the Flash prefetch, instruction and Data caches
@@ -273,8 +278,11 @@ int main(void)
 //		LCD_DisplayInt(7,9, read_RTC_DateStruct.Year);
 
 		BSP_LCD_Clear(LCD_COLOR_WHITE);
+		
+		//Read the number of values that are saved in the EEPROM so you know where to save next
+		numOfSavedVals = I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
 		//HAL_Delay(10);
-	
+	//EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation , 0);
 	/* Infinite loop */
 while (1)
   {
@@ -317,7 +325,12 @@ while (1)
 		
 		else if(userButtonPressed && setTimeDateFlag == 0) //I used else if because sometimes the real time clock skips a second when I use if. Else if removes that problem
 		{
-			//Move the second last button push time three memory spaces to make room for the new time
+			//Number of saved entries
+			numOfSavedVals = I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
+			
+			//Save current value of pushed time
+			
+			/*//Move the second last button push time three memory spaces to make room for the new time
 			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
 			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+3 , readData);
 			
@@ -325,13 +338,15 @@ while (1)
 			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+4 , readData);
 			
 			readData=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2);
-			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+5 , readData);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+5 , readData);*/
 			
 			//Get current time from RTC and save the user btton push time in EEPROM
 			HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
-			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation , read_RTC_TimeStruct.Hours);
-			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+1 , read_RTC_TimeStruct.Minutes);
-			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2 , read_RTC_TimeStruct.Seconds);
+			
+			//Save current time
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3 + 1, read_RTC_TimeStruct.Hours);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2+numOfSavedVals*3 , read_RTC_TimeStruct.Minutes);
+			EE_status=I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation+3+numOfSavedVals*3 , read_RTC_TimeStruct.Seconds);
 			
 			//Clear lines used to display information
 			BSP_LCD_ClearStringLine(4);
@@ -344,6 +359,12 @@ while (1)
 			LCD_DisplayInt(5,3, read_RTC_TimeStruct.Minutes);
 			LCD_DisplayString(5,5, (uint8_t *) ":");
 			LCD_DisplayInt(5,6, read_RTC_TimeStruct.Seconds);
+			
+			numOfSavedVals ++;
+			//write this back to the eeprom
+			I2C_ByteWrite(&I2c3_Handle,EEPROM_ADDRESS, memLocation, numOfSavedVals);
+			
+			//LCD_DisplayInt(3,0, numOfSavedVals);
 			
 			userButtonPressed = 0;
 		}
@@ -396,13 +417,13 @@ while (1)
 				timeDisplayed = 1;
 				
 				//Read from EEPROM
-				uint8_t firstHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation);
-				uint8_t firstMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+1);
-				uint8_t firstSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+2);
+				uint8_t firstHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3-2);
+				uint8_t firstMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3-1);
+				uint8_t firstSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3);
 				
-				uint8_t secondHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+3);
-				uint8_t secondMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+4);
-				uint8_t secondSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+5);
+				uint8_t secondHours=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3-5);
+				uint8_t secondMinutes=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3-4);
+				uint8_t secondSeconds=I2C_ByteRead(&I2c3_Handle,EEPROM_ADDRESS, memLocation+numOfSavedVals*3-3);
 				
 				//Display to LCD
 				LCD_DisplayString(8,0, (uint8_t *) "Last Two");
@@ -442,7 +463,7 @@ while (1)
 				
 				//Get the current time
 				//HAL_RTC_GetTime(&RTCHandle, &read_RTC_TimeStruct, RTC_FORMAT_BIN);
-				if (extBtnPushed && read_RTC_TimeStruct.Hours <24)
+				if (extBtnPushed && read_RTC_TimeStruct.Hours <23)
 				{
 					read_RTC_TimeStruct.Hours += 1;
 					extBtnPushed = 0; //Reset the flag
@@ -451,7 +472,7 @@ while (1)
 					//__HAL_RCC_RTC_DISABLE(); // Pause the clock
 					changedTimeShown = 0; //Time has been updated - change the display
 				}
-				else if (extBtnPushed && read_RTC_TimeStruct.Hours == 24)
+				else if (extBtnPushed && read_RTC_TimeStruct.Hours == 23)
 				{
 					//Overflow case
 					read_RTC_TimeStruct.Hours = 0;
