@@ -27,13 +27,12 @@
 
 #define COLUMN(x) ((x) * (((sFONT *)BSP_LCD_GetFont())->Width))    //see font.h, for defining LINE(X)
 
+
 TIM_HandleTypeDef Tim3_Handle, Tim4_Handle;
 TIM_OC_InitTypeDef Tim4_OCInitStructure;
 uint16_t Tim3_PrescalerValue, Tim4_PrescalerValue;
 
 __IO uint16_t Tim4_CCR;
-
-
 
 
 __IO uint16_t ADC3ConvertedValue=0;
@@ -85,27 +84,15 @@ void  LEDs_Config(void);
 void LCD_DisplayString(uint16_t LineNumber, uint16_t ColumnNumber, uint8_t *ptr);
 void LCD_DisplayInt(uint16_t LineNumber, uint16_t ColumnNumber, int Number);
 void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, int DigitAfterDecimalPoint);
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 
+
+static void SystemClock_Config(void);
+static void Error_Handler(void);
+static void EXTILine1_Config(void); // configure the exti line1, for exterrnal button, using PB1
 
 void TIM3_Config(void);
 void TIM4_Config(void);
 void TIM4_OC_Config(void);
-
-void ExtBtn1_Config(void);
-void ExtBtn2_Config(void);
-
-static void SystemClock_Config(void);
-static void Error_Handler(void);
-
-//State machine flags
-
-uint8_t PC1Pressed = 0;
-uint8_t PD2Pressed = 0;
-uint8_t Tim3Overflow = 0;
-double tempSetPoint = 24;
-uint8_t displayed = 0;
-
 
 int main(void){
 	
@@ -126,10 +113,21 @@ int main(void){
 		//Configure LED3 and LED4 ======================================
 		LEDs_Config();
 	
+		//Configer timer =================================
+	//BSP_LED_Toggle(LED4);
+		TIM3_Config();
+		
+		TIM4_Config();
+		
+		Tim4_CCR=32767;       //  Currently a duty cycle of 50%
+		TIM4_OC_Config();
+		BSP_LED_Toggle(LED3);
+	
 		//configure the USER button as exti mode. 
 		BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);   // BSP_functions in stm32f429i_discovery.c
 																			
-		
+		// ===========Config the GPIO for external interupt==============
+		EXTILine1_Config();
 	
 	
 		BSP_LCD_Init();
@@ -154,60 +152,12 @@ int main(void){
 		LCD_DisplayFloat(9, 10, 23.55, 2);
 		LCD_DisplayFloat(10, 10, 23.55, 2);
 	
-		//Configure external buttons
-		ExtBtn1_Config();  //for the first External button
-		ExtBtn2_Config();
-		
-		//Configure timers
-		TIM3_Config();
-		TIM4_Config();
-		Tim4_CCR=32767;       //  Currently a duty cycle of 50%
-		TIM4_OC_Config();
-	
 		
 	
+		
 		
 	while(1) {		
 			
-		if (Tim3Overflow)
-		{
-			if (PC1Pressed)
-			{
-				//Decrement the temperature by half a degree
-				tempSetPoint -= 0.5;
-				
-				//Display information needs to change - set flag
-				displayed = 0;
-				
-				//Reset the flag
-				PC1Pressed = 0;
-			}
-			
-			else if (PD2Pressed)
-			{
-				//Increment the temperature by half a degree
-				tempSetPoint += 0.5;
-				
-				//Display information needs to change - set flag
-				displayed = 0;
-				
-				//Reset the flag
-				PD2Pressed = 0;
-			}
-			
-			//Update LCD display if not already up to date
-			if (!displayed)
-			{
-				//Clear the line
-				BSP_LCD_ClearStringLine(10);
-				
-				//Write to the line
-				LCD_DisplayFloat(10, 10, tempSetPoint, 2);
-			}
-			
-			//Reset the flag
-			Tim3Overflow = 0;
-		}
 
 
 
@@ -337,6 +287,7 @@ void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, 
 		LCD_DisplayString(LineNumber, ColumnNumber, (uint8_t *) lcd_buffer);
 }
 
+
 //Configure Timer 3
 //This timer will be used to determine if the buttons have been held down for 1/2 a second
 void TIM3_Config(void)
@@ -346,7 +297,7 @@ void TIM3_Config(void)
 	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (2*(65535 + 1)))-1;
 	//Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / 10000) - 1;
 	Tim3_Handle.Instance = TIM3;
-	Tim3_Handle.Init.Period = 65535;
+	Tim3_Handle.Init.Period = 5000-1;
 	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
 	Tim3_Handle.Init.ClockDivision = 0;
   Tim3_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -364,7 +315,7 @@ void TIM3_Config(void)
     Error_Handler();
   }
 	
-	//BSP_LED_Toggle(LED4);
+	BSP_LED_Toggle(LED4);
 }
 
 //Configure Timer4
@@ -395,72 +346,24 @@ void TIM4_OC_Config(void)
 }
 
 
-void ExtBtn1_Config(void)     // for GPIO C pin 1
-// can only use PA0, PB0... to PA4, PB4 .... because only  only  EXTI0, ...EXTI4,on which the 
-	//mentioned pins are mapped to, are connected INDIVIDUALLY to NVIC. the others are grouped! 
-		//see stm32f4xx.h, there is EXTI0_IRQn...EXTI4_IRQn, EXTI15_10_IRQn defined
-{
-  GPIO_InitTypeDef   GPIO_InitStructure;
-
-  /* Enable GPIOB clock */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  
-  /* Configure PA0 pin as input floating */
-  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
-  GPIO_InitStructure.Pull =GPIO_PULLUP;
-  GPIO_InitStructure.Pin = GPIO_PIN_1;
-	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
-	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
-																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
-  /* Enable and set EXTI Line0 Interrupt to the lowest priority */
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 3, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-}
-
-void ExtBtn2_Config(void){  //**********PD2.***********
-
-	GPIO_InitTypeDef   GPIO_InitStructure;
-
-  /* Enable GPIOD clock */
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  
-  /* Configure PD2 pin as input floating */
-  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
-  GPIO_InitStructure.Pull =GPIO_PULLUP;
-  GPIO_InitStructure.Pin = GPIO_PIN_2;
-	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
-	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_2);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
-																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
-  // Enable and set EXTI Line0 Interrupt to the lowest priority 
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 1);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-}
-
-
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	
   if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
   {
-			BSP_LED_Toggle(LED4);
+			
   }
 	
 	
 	if(GPIO_Pin == GPIO_PIN_1)
   {
-		BSP_LED_Toggle(LED4);
+			//Raise the temperature set point
 	}  //end of PIN_1
 
 	if(GPIO_Pin == GPIO_PIN_2)
   {
-			BSP_LED_Toggle(LED4);
+			//Lower the temperature set point
 	} //end of if PIN_2	
 	
 	
@@ -470,16 +373,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if((*htim).Instance==TIM3)
 	{
-//		BSP_LED_Toggle(LED3);
+		BSP_LED_Toggle(LED3);
 	}
 }
 
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
-	//	if ((*htim).Instance==TIM4) {
-			
-	//	}	
+		if ((*htim).Instance==TIM4) {
+			BSP_LED_Toggle(LED4);
+		}	
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 	
@@ -490,8 +393,24 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef * htim){  //this is for
 	//__HAL_TIM_SET_COUNTER(htim, 0x0000);  not necessary
 }
 
+static void EXTILine1_Config(void)  //for STM32f429_DISCO board, can not use PA1, PB1 and PD1,---PC1 is OK!!!!
+{
+  GPIO_InitTypeDef   GPIO_InitStructure;
 
+  /* Enable GPIOB clock */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  
+  /* Configure PA0 pin as input floating */
+  GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStructure.Pull =GPIO_PULLUP;
+  GPIO_InitStructure.Pin = GPIO_PIN_1;
+	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
 
+  /* Enable and set EXTI Line0 Interrupt to the lowest priority */
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+}
 
 static void Error_Handler(void)
 {

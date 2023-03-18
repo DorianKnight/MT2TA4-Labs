@@ -100,6 +100,7 @@ __HAL_RCC_TIM3_CLK_ENABLE(); //this is defined in stm32f4xx_hal_rcc.h
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	//BSP_LED_Toggle(LED4);
 }
+	
 
 void HAL_TIM_OC_MspInit(TIM_HandleTypeDef *htim)
 { 

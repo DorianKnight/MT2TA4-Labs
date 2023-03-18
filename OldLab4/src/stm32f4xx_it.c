@@ -192,7 +192,7 @@ void EXTI1_IRQHandler(void)
 		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
 	} else {
 		  __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1);
-	}
+	}	
 }
 
 
@@ -213,7 +213,7 @@ void ADC_IRQHandler(void){
 
 
 void DMA2_Stream0_IRQHandler(void) {
-	// HAL_DMA_IRQHandler(Adc3_Handle.DMA_Handle);
+ HAL_DMA_IRQHandler(Adc3_Handle.DMA_Handle);
 }
 
 
@@ -226,7 +226,7 @@ void TIM3_IRQHandler(void)
 
 void TIM4_IRQHandler(void)
 {		
-		HAL_TIM_IRQHandler(&Tim4_Handle);
+	HAL_TIM_IRQHandler(&Tim4_Handle);
 }
 
 

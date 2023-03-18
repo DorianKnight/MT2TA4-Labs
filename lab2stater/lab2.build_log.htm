@@ -105,8 +105,8 @@ Package Vendor: Keil
       Source file:   MDK/Boards/ST/STM32F429I-Discovery/Common/Buttons_F429Discovery.c
 
    * Component: Keil.STM32F429I-Discovery::Board Support:Components:ILI9341:1.0.2
-      Source file:   Drivers/BSP/Components/ili9341/ili9341.c
       Include file:  Drivers/BSP/Components/ili9341/ili9341.h
+      Source file:   Drivers/BSP/Components/ili9341/ili9341.c
 
    * Component: Keil.STM32F429I-Discovery::Board Support:Components:STMPE811:2.0.0
       Include file:  Drivers/BSP/Components/stmpe811/stmpe811.h
@@ -117,12 +117,12 @@ Package Vendor: Keil
       Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery.h
 
    * Component: Keil.STM32F429I-Discovery::Board Support:Drivers:I/O:1.0.0
-      Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_io.h
       Source file:   Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_io.c
+      Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_io.h
 
    * Component: Keil.STM32F429I-Discovery::Board Support:Drivers:LCD:1.0.0
-      Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_lcd.h
       Source file:   Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_lcd.c
+      Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_lcd.h
 
    * Component: Keil.STM32F429I-Discovery::Board Support:Drivers:SDRAM:1.0.0
       Include file:  Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_sdram.h
@@ -132,19 +132,19 @@ Package Vendor: Keil
       Source file:   MDK/Boards/ST/STM32F429I-Discovery/Common/LED_F429Discovery.c
 
    * Component: Keil::Device:STM32Cube Framework:Classic:1.7.13
-      Include file:  CMSIS/Driver/Config/RTE_Device.h
-      Include file:  MDK/Templates/Inc/stm32f4xx_hal_conf.h
+      Include file:  MDK/Templates_LL/Inc/main.h
+      Source file:   MDK/Templates/Src/stm32f4xx_it.c
+      Include file:  MDK/Templates/Inc/stm32f4xx_it.h
       Source file:   MDK/Templates/Src/stm32f4xx_hal_msp.c
       Include file:  MDK/Templates/Inc/main.h
+      Include file:  MDK/Templates/Inc/stm32f4xx_hal_conf.h
       Source file:   MDK/Templates/Src/main.c
-      Include file:  MDK/Templates/Inc/stm32f4xx_it.h
-      Source file:   MDK/Templates/Src/stm32f4xx_it.c
-      Include file:  MDK/Templates_LL/Inc/main.h
       Source file:   MDK/Templates_LL/Src/main.c
+      Include file:  CMSIS/Driver/Config/RTE_Device.h
 
    * Component: Keil::Device:STM32Cube HAL:Common:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
       Include file:  Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
 
    * Component: Keil::Device:STM32Cube HAL:Cortex:1.7.13
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
@@ -160,30 +160,30 @@ Package Vendor: Keil
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c
 
    * Component: Keil::Device:STM32Cube HAL:Flash:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
 
    * Component: Keil::Device:STM32Cube HAL:GPIO:1.7.13
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
 
    * Component: Keil::Device:STM32Cube HAL:I2C:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
 
    * Component: Keil::Device:STM32Cube HAL:I2S:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2s_ex.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2s.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2s_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:LTDC:1.7.13
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_ltdc.c
 
    * Component: Keil::Device:STM32Cube HAL:PWR:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:RCC:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:RNG:1.7.13
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rng.c
@@ -196,23 +196,23 @@ Package Vendor: Keil
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
 
    * Component: Keil::Device:STM32Cube HAL:SRAM:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_sram.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_fmc.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_sram.c
 
    * Component: Keil::Device:STM32Cube HAL:TIM:1.7.13
-      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
+      Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
 
    * Component: Keil::Device:STM32Cube HAL:UART:1.7.13
       Source file:   Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
 
    * Component: Keil::Device:Startup:2.6.3
-      Include file:  Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
-      Source file:   MDK/Device/Source/ARM/STM32F4xx_OTP.s
       Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f429xx.s
       Source file:   MDK/Device/Source/ARM/STM32F42xxx_43xxx_OPT.s
+      Source file:   MDK/Device/Source/ARM/STM32F4xx_OTP.s
+      Include file:  Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
       Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:08
 </pre>
 </body>
 </html>
