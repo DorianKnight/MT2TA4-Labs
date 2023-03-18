@@ -105,6 +105,8 @@ uint8_t PD2Pressed = 0;
 uint8_t Tim3Overflow = 0;
 double tempSetPoint = 24;
 uint8_t displayed = 0;
+uint8_t timerOverflowCountPC1 = 0;
+uint8_t timerOverflowCountPD2 = 0;
 
 
 int main(void){
@@ -168,43 +170,87 @@ int main(void){
 	
 		
 	while(1) {		
-			
+		HAL_Delay(10); //Needed or else the if statement won't evaluate - not sure why
+		
+		//Button logic to increment or decrement the set point temperature
 		if (Tim3Overflow)
 		{
-			if (PC1Pressed)
+			if (timerOverflowCountPC1 <8 && HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == 0)
 			{
-				//Decrement the temperature by half a degree
-				tempSetPoint -= 0.5;
-				
-				//Display information needs to change - set flag
-				displayed = 0;
-				
-				//Reset the flag
+				timerOverflowCountPC1 ++;
+				//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
+			}
+			
+			else if (timerOverflowCountPD2 <8 && HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == 0)
+			{
+				timerOverflowCountPD2 ++;
+				//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
+			}
+			
+			//Check if the button has been released - if so, reset the timer overflow counter
+			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == 1)
+			{
+				timerOverflowCountPC1 = 0;
 				PC1Pressed = 0;
 			}
 			
-			else if (PD2Pressed)
+			//Check if the button has been released - if so, reset the timer overflow counter
+			if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == 1)
 			{
-				//Increment the temperature by half a degree
-				tempSetPoint += 0.5;
-				
-				//Display information needs to change - set flag
-				displayed = 0;
-				
-				//Reset the flag
+				timerOverflowCountPD2 = 0;
 				PD2Pressed = 0;
 			}
 			
-			//Update LCD display if not already up to date
-			if (!displayed)
+			if (timerOverflowCountPC1 >= 8 || timerOverflowCountPD2 >=8)
 			{
-				//Clear the line
-				BSP_LCD_ClearStringLine(10);
 				
-				//Write to the line
-				LCD_DisplayFloat(10, 10, tempSetPoint, 2);
+				if (PD2Pressed)
+				{
+					//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
+					//Decrement the temperature by half a degree
+					tempSetPoint -= 1;
+					
+					//Display information needs to change - set flag
+					displayed = 0;
+					
+					//Reset the flag if not pressed anymore
+					if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == 1)
+					{	
+						PD2Pressed = 0;
+					}
+				}
+				
+				else if (PC1Pressed)
+				{
+					//Increment the temperature by half a degree
+					tempSetPoint += 1;
+					
+					//Display information needs to change - set flag
+					displayed = 0;
+					
+					//Reset the flag if not pressed anymore
+					if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == 1)
+					{	
+						PC1Pressed = 0;
+					}
+				}
+				
+				//Update LCD display if not already up to date
+				if (!displayed)
+				{
+					//Clear the line
+					BSP_LCD_ClearStringLine(10);
+					HAL_Delay(10); //Needed so that the text properly prints to screen
+					
+					//Write to the line
+					LCD_DisplayString(10, 0, (uint8_t *)"setPoint");
+					LCD_DisplayFloat(10, 10, tempSetPoint, 2);
+				}
+				
+				//Reset the overflow counter
+				timerOverflowCountPC1 = 0;
+				timerOverflowCountPD2 = 0;
 			}
-			
 			//Reset the flag
 			Tim3Overflow = 0;
 		}
@@ -342,11 +388,12 @@ void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, 
 void TIM3_Config(void)
 {
 	
-	//Calculates the prescaler value for timer 3. We want the timer to overflow ever half a second which means that it needs to complete two cycles per second
-	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (2*(65535 + 1)))-1;
+	//Calculates the prescaler value for timer 3. We want the timer to overflow ever eigth a second which means that it needs to complete two cycles per second
+	Tim3_Handle.Init.Period = 65535;
+	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (16*(Tim3_Handle.Init.Period + 1)))-1;
 	//Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / 10000) - 1;
 	Tim3_Handle.Instance = TIM3;
-	Tim3_Handle.Init.Period = 65535;
+	
 	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
 	Tim3_Handle.Init.ClockDivision = 0;
   Tim3_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -456,11 +503,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == GPIO_PIN_1)
   {
 		BSP_LED_Toggle(LED4);
+		
+		//Set flag
+		PC1Pressed = 1;
 	}  //end of PIN_1
 
 	if(GPIO_Pin == GPIO_PIN_2)
   {
 			BSP_LED_Toggle(LED4);
+		
+		//Set flag
+		PD2Pressed = 1;
 	} //end of if PIN_2	
 	
 	
@@ -470,7 +523,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if((*htim).Instance==TIM3)
 	{
-//		BSP_LED_Toggle(LED3);
+		//Set flag
+		Tim3Overflow = 1;
+		BSP_LED_Toggle(LED3);
 	}
 }
 
