@@ -51,6 +51,9 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern uint32_t uhADCxConvertedValue;
+
+extern double ADC3ConvertedValue;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -138,44 +141,103 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 }
 
 
+//void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
+//{
+//  GPIO_InitTypeDef          GPIO_InitStruct;
+//  static DMA_HandleTypeDef  hdma_adc;
+//  
+//	//as for which GPIO pin has to be used for ADC, refer to datasheet for stm32f427xx/stm32f429xx, (table10 on P51 in DocID024030 Rev 7)
+//	//		Major pins for ADC: PA1--ADC123_IN1, PA2--ADC123_IN2, PA3---ADC123_IN3,            PA4--ADC12_IN4, PA5--ADC12_IN5,....PA7--ADC12_IN7.
+//	//		PC0--ADC123_IN10, ....PC3--ADC123_IN13, 
+//	
+//	
+//	 /*##-1- Enable peripherals and GPIO Clocks #################################*/
+//  /* Enable GPIO clock */
+//  
+//__HAL_RCC_GPIOC_CLK_ENABLE();   // for ADC3_IN13, the pin is PC3
+
+//  /* ADC3 Periph clock enable */
+// 
+//  __HAL_RCC_ADC3_CLK_ENABLE();
+//  
+//	
+//	/* Enable DMA2 clock */
+//  
+//	__HAL_RCC_DMA2_CLK_ENABLE();
+//  //BSP_LED_On(LED3);
+//	
+//	
+//// more settings, Please follow the example project for ACD_DMA.	
+//	
+//	
+
+//	
+//  
+//	
+
+
+
+
+
+//}
+extern DMA_HandleTypeDef  hdma_adc;
+
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef          GPIO_InitStruct;
-  static DMA_HandleTypeDef  hdma_adc;
   
-	//as for which GPIO pin has to be used for ADC, refer to datasheet for stm32f427xx/stm32f429xx, (table10 on P51 in DocID024030 Rev 7)
-	//		Major pins for ADC: PA1--ADC123_IN1, PA2--ADC123_IN2, PA3---ADC123_IN3,            PA4--ADC12_IN4, PA5--ADC12_IN5,....PA7--ADC12_IN7.
-	//		PC0--ADC123_IN10, ....PC3--ADC123_IN13, 
-	
-	
-	 /*##-1- Enable peripherals and GPIO Clocks #################################*/
+  
+  /*##-1- Enable peripherals and GPIO Clocks #################################*/
   /* Enable GPIO clock */
-  
-///__HAL_RCC_GPIOC_CLK_ENABLE();   // for ADC3_IN13, the pin is PC3
-
-  /* ADC3 Periph clock enable */
- 
-//  /__HAL_RCC_ADC3_CLK_ENABLE();
-  
+  //ADC3_CHANNEL_GPIO_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();   // for ADC3_IN13, the pin is PC3
 	
+	/* ADC3 Periph clock enable */
+  //ADCx_CLK_ENABLE();
+	__HAL_RCC_ADC3_CLK_ENABLE();
+  
 	/* Enable DMA2 clock */
+  //DMAx_CLK_ENABLE(); 
+  __HAL_RCC_DMA2_CLK_ENABLE();
+	
+  /*##-2- Configure peripheral GPIO ##########################################*/ 
+  /* ADC3 Channel8 GPIO pin configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_3; //ADC_CHANNEL_13; //ADCx_CHANNEL_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC /*ADCx_CHANNEL_GPIO_PORT*/, &GPIO_InitStruct);
   
-//	__HAL_RCC_DMA2_CLK_ENABLE();
+  /*##-3- Configure the DMA streams ##########################################*/
+  /* Set the parameters to be configured */
+  hdma_adc.Instance = DMA2_Stream0; //ADCx_DMA_STREAM;
   
-	
-	
-// more settings, Please follow the example project for ACD_DMA.	
-	
-	
+  hdma_adc.Init.Channel  = DMA_CHANNEL_0; //ADCx_DMA_CHANNEL;
+  hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_adc.Init.Mode = DMA_CIRCULAR;
+  hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;         
+  hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+  hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE; 
 
+  HAL_DMA_Init(&hdma_adc);
+    
+  /* Associate the initialized DMA handle to the the ADC handle */
+  __HAL_LINKDMA(hadc, DMA_Handle, hdma_adc);
+
+  /*##-4- Configure the NVIC for DMA #########################################*/
+  /* NVIC configuration for DMA transfer complete interrupt */
+//  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);   
+//  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 	
-  
+	//HAL_NVIC_SetPriority(ADC_IRQn, 10, 10);   
+  //HAL_NVIC_EnableIRQ(ADC_IRQn);
 	
-
-
-
-
-
+	//HAL_DMA_Start_IT(&hdma_adc, uhADCxConvertedValue, ADC3ConvertedValue, 1);
 }
   
 /**
