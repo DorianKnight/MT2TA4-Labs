@@ -113,11 +113,6 @@ void TIM4_Config(void);
 void TIM4_OC_Config(void);
 
 void ADC_Config(void);
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle);
-
-static void DMA_Config(void);
-static void TransferComplete(DMA_HandleTypeDef *DmaHandle);
-static void TransferError(DMA_HandleTypeDef *DmaHandle);
 
 void ExtBtn1_Config(void);
 void ExtBtn2_Config(void);
@@ -181,8 +176,8 @@ int main(void){
 		LCD_DisplayString(10, 0, (uint8_t *)"setPoint");
 	
 	
-		LCD_DisplayFloat(9, 10, 23.55, 2);
-		LCD_DisplayFloat(10, 10, 23.55, 2);
+		LCD_DisplayFloat(9, 10, 24, 2);
+		LCD_DisplayFloat(10, 10, 24, 2);
 	
 		//Configure external buttons
 		ExtBtn1_Config();  //for the first External button
@@ -198,10 +193,6 @@ int main(void){
 		
 		//Configure ADC
 		ADC_Config();
-		
-		//Configure DMA
-		//DMA_Config();
-		
 		HAL_ADC_PollForConversion(&Adc3_Handle,1000);
 	
 		
@@ -576,93 +567,9 @@ void ADC_Config(void)
     /* Start Conversation Error */
     Error_Handler(); 
   }
-	//HAL_ADC_Start_IT(&Adc3_Handle);
 
-	//BSP_LED_Toggle(LED3);
 }
 
-//Configures DMA
-static void DMA_Config(void)
-{
-	
-  /*## -1- Enable DMA2 clock #################################################*/
-  __HAL_RCC_DMA2_CLK_ENABLE();
-
-//  /*##-2- Select the DMA functional Parameters ###############################*/
-//  DmaHandle.Init.Channel = DMA_CHANNEL_0;                     /* DMA_CHANNEL_0                    */
-//  DmaHandle.Init.Direction = DMA_MEMORY_TO_MEMORY;          /* M2M transfer mode                */
-//  DmaHandle.Init.PeriphInc = DMA_PINC_ENABLE;               /* Peripheral increment mode Enable */
-//  DmaHandle.Init.MemInc = DMA_MINC_ENABLE;                  /* Memory increment mode Enable     */
-//  DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD; /* Peripheral data alignment : Word */
-//  DmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;    /* memory data alignment : Word     */
-//  DmaHandle.Init.Mode = DMA_NORMAL;                         /* Normal DMA mode                  */
-//  DmaHandle.Init.Priority = DMA_PRIORITY_HIGH;              /* priority level : high            */
-//  DmaHandle.Init.FIFOMode = DMA_FIFOMODE_ENABLE;            /* FIFO mode enabled                */
-//  DmaHandle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL; /* FIFO threshold: 1/4 full   */
-//  DmaHandle.Init.MemBurst = DMA_MBURST_SINGLE;              /* Memory burst                     */
-//  DmaHandle.Init.PeriphBurst = DMA_PBURST_SINGLE;           /* Peripheral burst                 */
-
-//  /*##-3- Select the DMA instance to be used for the transfer : DMA2_Stream0 #*/
-//  DmaHandle.Instance = DMA2_Stream0;
-
-  /*##-4- Initialize the DMA stream ##########################################*/
-//  if(HAL_DMA_Init(&DmaHandle) != HAL_OK)
-//  {
-//    /* Turn LED3/LED4 on: in case of Initialization Error */
-//		LCD_DisplayString(2, 0, (uint8_t *)"GOT HERE 1");
-//    BSP_LED_On(LED3);
-//    BSP_LED_On(LED4);
-//    while(1)
-//    {
-//    }
-//  }
- 
-  /*##-5- Select Callbacks functions called after Transfer complete and Transfer error */
-  //HAL_DMA_RegisterCallback(&DmaHandle, HAL_DMA_XFER_CPLT_CB_ID, TransferComplete);
-  //HAL_DMA_RegisterCallback(&DmaHandle, HAL_DMA_XFER_ERROR_CB_ID, TransferError);
-
-  /*##-6- Configure NVIC for DMA transfer complete/error interrupts ##########*/
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-
-  /*##-7- Start the DMA transfer using the interrupt mode ####################*/
-  /* Configure the source, destination and buffer size DMA fields and Start DMA Stream transfer */
-  /* Enable All the DMA interrupts */
-	//Last line of code that acually runs currently at 6:31 March 18th 2023
-//  if(HAL_DMA_Start_IT(&DmaHandle, (uint32_t)&uhADCxConvertedValue, (uint32_t)&ADC3ConvertedValue, 1) != HAL_OK)
-//  {
-//		
-//    /* Turn LED3/LED4 on: Transfer error */
-//    BSP_LED_On(LED3);
-//    BSP_LED_On(LED4);
-//		LCD_DisplayString(2, 0, (uint8_t *)"GOT HERE 2");
-//    while(1)
-//    {
-//    }   
-//  }
-	LCD_DisplayString(13, 0, (uint8_t *)"GOT HERE 5");
-	
-}
-
-static void TransferComplete(DMA_HandleTypeDef *DmaHandle)
-{
-  // Turn LED3 on: Transfer correct 
-	LCD_DisplayString(0, 0, (uint8_t *)"GOT HERE 3");
-  BSP_LED_On(LED3);
-}
-
-/**
-  * @brief  DMA conversion error callback
-  * @note   This function is executed when the transfer error interrupt 
-  *         is generated during DMA transfer
-  * @retval None
-  */
-static void TransferError(DMA_HandleTypeDef *DmaHandle)
-{
-  /* Turn LED4 on: Transfer Error */
-	LCD_DisplayString(5, 0, (uint8_t *)"GOT HERE 4");
-  BSP_LED_On(LED4);
-}
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -702,25 +609,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		timerOverflowCountTemp++;
 		
-		if (timerOverflowCountTemp >16)
+		if (timerOverflowCountTemp >16) //ensures that temperature is only updated once per second to minimize screen glitching
 		{
+			//Reset the flag
 			timerOverflowCountTemp = 0;
 			ADC3ConvertedValue = HAL_ADC_GetValue(&Adc3_Handle)* 0.02442;
+			
 			//Display updated temperature to LCD
-			BSP_LCD_ClearStringLine(11);
+			BSP_LCD_ClearStringLine(9);
 			HAL_Delay(10);
-			LCD_DisplayFloat(11,0,ADC3ConvertedValue,2);
+			LCD_DisplayString(9, 0, (uint8_t *) "Current ");
+			LCD_DisplayFloat(9,10,ADC3ConvertedValue,2);
 		}
-		
-		
-		
-		//Get temperature from ADC
-		
-		//Raw voltage from amplifier multiplied by the constant given in the file gives us the temperature
-		//ADC3ConvertedValue = uhADCxConvertedValue;// * 0.02442;
-		//BSP_LCD_ClearStringLine(11);
-		//HAL_Delay(10);
-		//LCD_DisplayInt(11,0,ADC3ConvertedValue);
 	}
 }
 
@@ -738,25 +638,6 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_h
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef * htim){  //this is for TIM3_pwm
 	
 	//__HAL_TIM_SET_COUNTER(htim, 0x0000);  not necessary
-}
-
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle)
-{
-  /* Turn LED3 on: Transfer process is correct */
-  //BSP_LED_On(LED3);
-	//LCD_DisplayString(2, 0, (uint8_t *)"GOT HERE 2");
-	
-	//Print Temperature to screen
-	//BSP_LCD_ClearStringLine(11);
-	
-	//LCD_DisplayFloat(11,0,HAL_ADC_GetValue(&Adc3_Handle)* 0.02442,2);
-	
-	//LCD_DisplayFloat(11,0,HAL_ADC_GetValue(&Adc3_Handle)* 0.02442,2);
-	
-	//Read value and convert it
-	ADC3ConvertedValue = HAL_ADC_GetValue(&Adc3_Handle)* 0.02442;
-	
 }
 
 
