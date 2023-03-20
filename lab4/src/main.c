@@ -39,17 +39,9 @@ __IO uint16_t Tim4_CCR;
 ADC_HandleTypeDef Adc3_Handle;
 ADC_ChannelConfTypeDef sConfig;
 
-//DMA handler declaration
-DMA_HandleTypeDef DmaHandle;
-DMA_HandleTypeDef hdma_adc;
-
-const uint32_t BUFFER_SIZE = 32;
-//static const uint32_t aSRC_Const_Buffer = ;//The spot where the raw value is stored
-
-//static uint32_t aDST_Buffer[BUFFER_SIZE];
 
 /* Variable used to get converted value */
-uint32_t uhADCxConvertedValue = 0;
+uint32_t uhADCxConvertedValue = 0; //I don't think I used this but it came in the starter code so I've kept it just in case
 
 
 
@@ -125,7 +117,7 @@ static void Error_Handler(void);
 uint8_t PC1Pressed = 0;
 uint8_t PD2Pressed = 0;
 uint8_t Tim3Overflow = 0;
-double tempSetPoint = 24;
+double tempSetPoint = 25;
 uint8_t displayed = 0;
 uint8_t timerOverflowCountPC1 = 0;
 uint8_t timerOverflowCountPD2 = 0;
@@ -179,7 +171,7 @@ int main(void){
 	
 	
 		LCD_DisplayFloat(9, 10, 24, 2);
-		LCD_DisplayFloat(10, 10, 24, 2);
+		LCD_DisplayFloat(10, 10, tempSetPoint, 2);
 	
 		//Configure external buttons
 		ExtBtn1_Config();  //for the first External button
@@ -188,7 +180,7 @@ int main(void){
 		//Configure timers
 		TIM3_Config();
 		TIM4_Config();
-		Tim4_CCR=65535/1;       //  Currently a duty cycle of 50%
+		Tim4_CCR=65535/1;       //  An inital value that will be changed
 		TIM4_OC_Config();
 	
 		
@@ -203,20 +195,20 @@ int main(void){
 		HAL_Delay(10); //Needed or else the if statement won't evaluate - not sure why
 		
 		//Button logic to increment or decrement the set point temperature
+		//Only triggered once the timer overflows to reduce load on CPU and gain the ability to preceive how much time has passed
 		if (Tim3Overflow)
 		{
 			//If PC1 is being held down but it still hasn't been half a second
+			//We'll enter this statement 16 times per second so we know if it's the eighth time, it's been half a second
 			if (timerOverflowCountPC1 <8 && HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == 0)
 			{
 				timerOverflowCountPC1 ++;
-				//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
 			}
 			
 			//If PD2 is being held down but it still hasn't been half a second
 			else if (timerOverflowCountPD2 <8 && HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == 0)
 			{
 				timerOverflowCountPD2 ++;
-				//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
 			}
 			
 			//Check if the button has been released - if so, reset the timer overflow counter
@@ -240,7 +232,6 @@ int main(void){
 				//If PD2 is pressed
 				if (PD2Pressed)
 				{
-					//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
 					//Decrement the temperature by half a degree
 					tempSetPoint -= 1;
 					
@@ -280,8 +271,6 @@ int main(void){
 					//Write to the line
 					LCD_DisplayString(10, 0, (uint8_t *)"setPoint");
 					LCD_DisplayFloat(10, 10, tempSetPoint, 2);
-					
-					//LCD_DisplayFloat(11,0,ADC3ConvertedValue,2);
 				}
 				
 				//Reset the overflow counter
@@ -312,7 +301,8 @@ int main(void){
 					fanDutyCycle += 0.5;
 					Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * (fanDutyCycle/100);
 					__HAL_TIM_SET_COMPARE(&Tim4_Handle, TIM_CHANNEL_2, Tim4_OCInitStructure.Pulse);
-					//HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_2);
+
+					//This is here to show that the fan PWM gradually increases
 					LCD_DisplayInt(13, 0, Tim4_OCInitStructure.Pulse);
 					LCD_DisplayFloat(14, 0, fanDutyCycle,2);
 				}
@@ -328,17 +318,12 @@ int main(void){
 				//Reset the duty cycle to 25 percent so when you start up again you'll start from 25%
 				fanDutyCycle = 25;
 				Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * fanDutyCycle;
+				
+				//These are here to show that the duty cycle gets reset down to 25%
 				LCD_DisplayInt(13, 0, Tim4_OCInitStructure.Pulse);
-					LCD_DisplayFloat(14, 0, fanDutyCycle,2);
+				LCD_DisplayFloat(14, 0, fanDutyCycle,2);
 			}
 		}
-
-		
-	
-
-
-
-		
 	} // end of while loop
 	
 }  //end of main
@@ -466,11 +451,9 @@ void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, 
 //This timer will be used to determine if the buttons have been held down for 1/2 a second
 void TIM3_Config(void)
 {
-	
-	//Calculates the prescaler value for timer 3. We want the timer to overflow ever eigth a second which means that it needs to complete two cycles per second
 	Tim3_Handle.Init.Period = 65535;
+	//Calculates the prescaler value for timer 3. We want the timer to overflow 16 times a second
 	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (16*(Tim3_Handle.Init.Period + 1)))-1;
-	//Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / 10000) - 1;
 	Tim3_Handle.Instance = TIM3;
 	
 	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
@@ -500,7 +483,7 @@ void TIM4_Config(void)
 	//Calculate the prescaler value to have the TIM4 counter overflow 50 KHz
 	
 	Tim4_Handle.Init.Period = 65535; //This won't matter since we'll be using the output compare in Timer 4
-	Tim4_PrescalerValue = (uint32_t) (SystemCoreClock / (16 * (Tim4_Handle.Init.Period + 1)))-1;
+	Tim4_PrescalerValue = (uint32_t) (SystemCoreClock / (100 * (Tim4_Handle.Init.Period + 1)))-1; //Lower prescaler makes the PWM smoother
 	
 	Tim4_Handle.Instance = TIM4;
 	Tim4_Handle.Init.Prescaler = Tim4_PrescalerValue;
@@ -531,7 +514,6 @@ void TIM4_OC_Config(void)
 	}
 	
 	HAL_TIM_PWM_MspInit(&Tim4_Handle);
-	//HAL_TIM_PWM_Start(&Tim4_Handle,TIM_CHANNEL_2);
 }
 
 
@@ -649,8 +631,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		
 		//Set flag
 		PC1Pressed = 1;
-		
-		Tim4_CCR += 10000;
 	}  //end of PIN_1
 
 	if(GPIO_Pin == GPIO_PIN_2)
@@ -696,7 +676,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_h
 			//BSP_LED_Toggle(LED3);
 		}	
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
-		//__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
+		//__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h //This line needs to be commented out or else you wont get a duty cycle less than 100% because you'll always reset once you hit CCR
 	
 }
  
