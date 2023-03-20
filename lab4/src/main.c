@@ -130,6 +130,8 @@ uint8_t displayed = 0;
 uint8_t timerOverflowCountPC1 = 0;
 uint8_t timerOverflowCountPD2 = 0;
 uint8_t timerOverflowCountTemp = 0;
+double fanDutyCycle = 25;
+uint8_t PWMON = 0;
 
 
 int main(void){
@@ -186,7 +188,7 @@ int main(void){
 		//Configure timers
 		TIM3_Config();
 		TIM4_Config();
-		Tim4_CCR=32767;       //  Currently a duty cycle of 50%
+		Tim4_CCR=65535/1;       //  Currently a duty cycle of 50%
 		TIM4_OC_Config();
 	
 		
@@ -203,12 +205,14 @@ int main(void){
 		//Button logic to increment or decrement the set point temperature
 		if (Tim3Overflow)
 		{
+			//If PC1 is being held down but it still hasn't been half a second
 			if (timerOverflowCountPC1 <8 && HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == 0)
 			{
 				timerOverflowCountPC1 ++;
 				//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
 			}
 			
+			//If PD2 is being held down but it still hasn't been half a second
 			else if (timerOverflowCountPD2 <8 && HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2) == 0)
 			{
 				timerOverflowCountPD2 ++;
@@ -229,9 +233,11 @@ int main(void){
 				PD2Pressed = 0;
 			}
 			
+			//If PC1 or PD2 is being held down and it has been half a second
 			if (timerOverflowCountPC1 >= 8 || timerOverflowCountPD2 >=8)
 			{
 				
+				//If PD2 is pressed
 				if (PD2Pressed)
 				{
 					//LCD_DisplayString(13, 0, (uint8_t *)"GOTHERE");
@@ -248,6 +254,7 @@ int main(void){
 					}
 				}
 				
+				//If PC1 is pressed
 				else if (PC1Pressed)
 				{
 					//Increment the temperature by half a degree
@@ -283,9 +290,51 @@ int main(void){
 			}
 			//Reset the flag
 			Tim3Overflow = 0;
+			
+			//Check if the temperature is above the set point
+			if (ADC3ConvertedValue > tempSetPoint)
+			{
+				//Start PWM if currently off and slowly increase the duty cycle of the fan
+				if (!PWMON)
+				{
+					//Start PWM
+					Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * (fanDutyCycle/100);
+					HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_2);
+					HAL_TIM_PWM_Start(&Tim4_Handle,TIM_CHANNEL_2);
+					
+					//Set flag
+					PWMON = 1;
+				}
+				
+				else if (fanDutyCycle <100)
+				{
+					//PWM is on - slowly increase the duty cycle if not at 100 yet
+					fanDutyCycle += 0.5;
+					Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * (fanDutyCycle/100);
+					__HAL_TIM_SET_COMPARE(&Tim4_Handle, TIM_CHANNEL_2, Tim4_OCInitStructure.Pulse);
+					//HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_2);
+					LCD_DisplayInt(13, 0, Tim4_OCInitStructure.Pulse);
+					LCD_DisplayFloat(14, 0, fanDutyCycle,2);
+				}
+			}
+			
+			else if (ADC3ConvertedValue <= tempSetPoint)
+			{
+				//Stop PWM
+				HAL_TIM_PWM_Stop(&Tim4_Handle,TIM_CHANNEL_2);
+				//Reset flag
+				PWMON = 0;
+				
+				//Reset the duty cycle to 25 percent so when you start up again you'll start from 25%
+				fanDutyCycle = 25;
+				Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * fanDutyCycle;
+				LCD_DisplayInt(13, 0, Tim4_OCInitStructure.Pulse);
+					LCD_DisplayFloat(14, 0, fanDutyCycle,2);
+			}
 		}
 
-
+		
+	
 
 
 
@@ -451,24 +500,38 @@ void TIM4_Config(void)
 	//Calculate the prescaler value to have the TIM4 counter overflow 50 KHz
 	
 	Tim4_Handle.Init.Period = 65535; //This won't matter since we'll be using the output compare in Timer 4
-	Tim4_PrescalerValue = (uint32_t) (SystemCoreClock / (50000 * (Tim4_Handle.Init.Period + 1)))-1;
+	Tim4_PrescalerValue = (uint32_t) (SystemCoreClock / (16 * (Tim4_Handle.Init.Period + 1)))-1;
+	
 	Tim4_Handle.Instance = TIM4;
 	Tim4_Handle.Init.Prescaler = Tim4_PrescalerValue;
 	Tim4_Handle.Init.ClockDivision = 0;
 	Tim4_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	
 }
 
 //Configure the output compare for timer 4
 
 void TIM4_OC_Config(void)
 {
-	Tim4_OCInitStructure.OCMode = TIM_OCMODE_TIMING;
-	Tim4_OCInitStructure.Pulse = Tim4_CCR; //CCR is variable between 0 and 65535
+	Tim4_OCInitStructure.OCMode = TIM_OCMODE_PWM1;
+	Tim4_OCInitStructure.Pulse =Tim4_CCR; //CCR is variable between 0 and 65535 and is the duty cycle
 	Tim4_OCInitStructure.OCPolarity = TIM_OCPOLARITY_HIGH;
 	
 	HAL_TIM_OC_Init(&Tim4_Handle);
-	HAL_TIM_OC_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_1);
-	HAL_TIM_OC_Start_IT(&Tim4_Handle, TIM_CHANNEL_1);
+	HAL_TIM_OC_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_2);
+	HAL_TIM_OC_Start_IT(&Tim4_Handle, TIM_CHANNEL_2);
+	
+	if (HAL_TIM_PWM_Init(&Tim4_Handle) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	
+	HAL_TIM_PWM_MspInit(&Tim4_Handle);
+	//HAL_TIM_PWM_Start(&Tim4_Handle,TIM_CHANNEL_2);
 }
 
 
@@ -586,6 +649,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		
 		//Set flag
 		PC1Pressed = 1;
+		
+		Tim4_CCR += 10000;
 	}  //end of PIN_1
 
 	if(GPIO_Pin == GPIO_PIN_2)
@@ -605,7 +670,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		//Set flag
 		Tim3Overflow = 1;
-		BSP_LED_Toggle(LED3);
+		//BSP_LED_Toggle(LED4);
 		
 		timerOverflowCountTemp++;
 		
@@ -627,11 +692,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
-	//	if ((*htim).Instance==TIM4) {
-			
-	//	}	
+		if ((*htim).Instance==TIM4) {
+			//BSP_LED_Toggle(LED3);
+		}	
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
-		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
+		//__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 	
 }
  
