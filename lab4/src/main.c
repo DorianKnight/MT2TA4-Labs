@@ -317,7 +317,7 @@ int main(void){
 				
 				//Reset the duty cycle to 25 percent so when you start up again you'll start from 25%
 				fanDutyCycle = 25;
-				Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * fanDutyCycle;
+				Tim4_OCInitStructure.Pulse = Tim4_Handle.Init.Period * (fanDutyCycle/100);
 				
 				//These are here to show that the duty cycle gets reset down to 25%
 				LCD_DisplayInt(13, 0, Tim4_OCInitStructure.Pulse);

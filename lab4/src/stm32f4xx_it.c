@@ -54,7 +54,6 @@
 
 extern ADC_HandleTypeDef    Adc3_Handle;
 extern TIM_HandleTypeDef    Tim3_Handle, Tim4_Handle;
-extern DMA_HandleTypeDef    hdma_adc;
 
 
 /* Private define ------------------------------------------------------------*/
@@ -215,16 +214,8 @@ void ADC_IRQHandler(void){
 }
 
 
-void DMA2_Stream0_IRQHandler(void) {
-	BSP_LED_Toggle(LED3);
-	//HAL_ADC_ConvCpltCallback(&Adc3_Handle); 
-	HAL_DMA_IRQHandler(&hdma_adc);
-}
 
-/*void DMA_IRQHandler(void)
-{
-	BSP_LED_Toggle(LED3);
-}*/
+
 
 
 
