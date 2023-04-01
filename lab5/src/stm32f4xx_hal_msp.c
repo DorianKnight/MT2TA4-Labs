@@ -76,7 +76,7 @@ __HAL_RCC_TIM3_CLK_ENABLE(); //this is defined in stm32f4xx_hal_rcc.h
 	
 	
   //Configure the NVIC for TIMx 
-	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 2);
+	HAL_NVIC_SetPriority(TIM3_IRQn, 2, 0);
   
   // Enable the TIM global Interrupt 
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
@@ -90,7 +90,7 @@ void HAL_TIM_OC_MspInit(TIM_HandleTypeDef *htim)
  __HAL_RCC_TIM3_CLK_ENABLE();
     
   //Configure the NVIC for TIMx 
-	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 2);
+	HAL_NVIC_SetPriority(TIM3_IRQn, 2, 0);
   
   // Enable the TIM global Interrupt 
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);

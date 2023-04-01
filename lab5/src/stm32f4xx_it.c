@@ -225,7 +225,7 @@ void ADC_IRQHandler(void){
 void TIM3_IRQHandler(void)
 {
   
-	//HAL_TIM_IRQHandler(&Tim3_Handle);
+	HAL_TIM_IRQHandler(&Tim3_Handle);
 }
 
 

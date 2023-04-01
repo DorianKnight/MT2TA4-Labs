@@ -16,9 +16,20 @@ void LCD_DisplayString(uint16_t LineNumber, uint16_t ColumnNumber, uint8_t *ptr)
 void LCD_DisplayInt(uint16_t LineNumber, uint16_t ColumnNumber, int Number);
 void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, int DigitAfterDecimalPoint);
 
+void LEDs_Config(void);
+
+void TIM3_Config(void);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
+void ExtBtn1_Config(void);
+void ExtBtn2_Config(void);
+void ExtBtn3_Config(void);
 
 static void SystemClock_Config(void);
 static void Error_Handler(void);
+
+TIM_HandleTypeDef Tim3_Handle;
+uint16_t Tim3_PrescalerValue;
 
 int main(void){
 	
@@ -54,8 +65,17 @@ int main(void){
 	
 		LCD_DisplayInt(2, 8, 5);
 			
-	
+		//Initializing the LEDS	
+		LEDs_Config();
 		
+		//Configure the buttons
+		ExtBtn1_Config();
+		ExtBtn2_Config();
+		ExtBtn3_Config();
+		
+		//Configuring the timer
+		TIM3_Config();
+		LCD_DisplayString(10, 3, (uint8_t *)"Testing line");
 		
 		while(1) {	
 
@@ -175,37 +195,147 @@ void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, 
 		LCD_DisplayString(LineNumber, ColumnNumber, (uint8_t *) lcd_buffer);
 }
 
+void LEDs_Config(void)
+{
+ /* Initialize Leds mounted on STM32F429-Discovery board */
+	BSP_LED_Init(LED3);   //BSP_LED_....() are in stm32f4291_discovery.c
+  BSP_LED_Init(LED4);
+}
 
+
+void TIM3_Config(void)
+{
+	Tim3_Handle.Init.Period = 65535;
+	//Calculates the prescaler value for timer 3. We want the timer to overflow 16 times a second
+	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (16*(Tim3_Handle.Init.Period + 1)))-1;
+	Tim3_Handle.Instance = TIM3;
+	
+	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
+	Tim3_Handle.Init.ClockDivision = 0;
+  Tim3_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	
+	
+	if(HAL_TIM_Base_Init(&Tim3_Handle) != HAL_OK) // this line need to call the callback function _MspInit() in stm32f4xx_hal_msp.c to set up peripheral clock and NVIC..
+  {
+    Error_Handler();
+  }
+	
+	if(HAL_TIM_Base_Start_IT(&Tim3_Handle) != HAL_OK)   //the TIM_XXX_Start_IT function enable IT, and also enable Timer
+																											//so do not need HAL_TIM_BASE_Start() any more.
+  {
+		//BSP_LED_Toggle(LED3);
+    Error_Handler();
+  }
+	
+	BSP_LED_Toggle(LED4);
+}
+
+void ExtBtn1_Config(void)     // for GPIO C pin 1
+// can only use PA0, PB0... to PA4, PB4 .... because only  only  EXTI0, ...EXTI4,on which the 
+	//mentioned pins are mapped to, are connected INDIVIDUALLY to NVIC. the others are grouped! 
+		//see stm32f4xx.h, there is EXTI0_IRQn...EXTI4_IRQn, EXTI15_10_IRQn defined
+{
+  GPIO_InitTypeDef   GPIO_InitStructure;
+
+  /* Enable GPIOB clock */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  
+  /* Configure PA0 pin as input floating */
+  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
+  GPIO_InitStructure.Pull =GPIO_PULLUP;
+  GPIO_InitStructure.Pin = GPIO_PIN_1;
+	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
+	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
+																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
+  /* Enable and set EXTI Line0 Interrupt to the lowest priority */
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+}
+
+void ExtBtn2_Config(void){  //**********PD2.***********
+
+	GPIO_InitTypeDef   GPIO_InitStructure;
+
+  /* Enable GPIOD clock */
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  
+  /* Configure PD2 pin as input floating */
+  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
+  GPIO_InitStructure.Pull =GPIO_PULLUP;
+  GPIO_InitStructure.Pin = GPIO_PIN_2;
+	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
+	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_2);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
+																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
+  // Enable and set EXTI Line0 Interrupt to the lowest priority 
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 3, 1);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+}
+
+
+void ExtBtn3_Config(void){  //**********PC3.***********
+
+	GPIO_InitTypeDef   GPIO_InitStructure;
+
+  /* Enable GPIOC clock */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  
+  /* Configure PD2 pin as input floating */
+  GPIO_InitStructure.Mode =  GPIO_MODE_IT_FALLING;
+  GPIO_InitStructure.Pull =GPIO_PULLUP;
+  GPIO_InitStructure.Pin = GPIO_PIN_3;
+	//GPIO_InitStructure.Speed=GPIO_SPEED_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	//__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_3);   //is defined the same as the __HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_1); ---check the hal_gpio.h
+	__HAL_GPIO_EXTI_CLEAR_FLAG(GPIO_PIN_3);// after moving the chunk of code in the GPIO_EXTI callback from _it.c (before these chunks are in _it.c)
+																					//the program "freezed" when start, suspect there is a interupt pending bit there. Clearing it solve the problem.
+  // Enable and set EXTI Line0 Interrupt to the lowest priority 
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 3, 2);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+}
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	
 		if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
 		{
-	
+			BSP_LED_Toggle(LED3);
 		}
 		
 		
 		if(GPIO_Pin == GPIO_PIN_1)
 		{
-				
+				BSP_LED_Toggle(LED3);
 				
 			
 		}  //end of PIN_1
 
 		if(GPIO_Pin == GPIO_PIN_2) {
-		
+			BSP_LED_Toggle(LED3);
 				
 		} //end of if PIN_2	
 		
 		if(GPIO_Pin == GPIO_PIN_3)
 		{
-						
+			BSP_LED_Toggle(LED3);
 					
 				
 		} //end of if PIN_3
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if((*htim).Instance==TIM3)
+	{
+		BSP_LED_Toggle(LED4);
+	}
+}
 
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
