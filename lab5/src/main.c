@@ -36,6 +36,9 @@ uint16_t Tim3_PrescalerValue;
 uint16_t Tim3_CCR = 65535;
 
 //Flag declaration
+uint8_t directionFlag = 0; //0 corresponds to clockwise and 1 corresponds to counter clockwise
+uint8_t stepFlag = 0; //0 corresponds to full stepping and 1 corresponds to half stepping
+uint8_t stepCounter = 0; //Counts the number of steps completed, there are 96 in total (0-95), if full stepping the step count increments by 2
 
 int main(void){
 	
@@ -75,14 +78,15 @@ int main(void){
 		LEDs_Config();
 		
 		//Configure the buttons
-		ExtBtn1_Config();
-		ExtBtn2_Config();
-		ExtBtn3_Config();
+		BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI); //User button
+		ExtBtn1_Config(); //PC1
+		ExtBtn2_Config(); //PD2
+		ExtBtn3_Config(); //PC3
 		
 		//Configuring the timer
 		TIM3_Config();
 		TIM3_OC_Config();
-		LCD_DisplayString(10, 3, (uint8_t *)"Testing line");
+		//LCD_DisplayString(10, 3, (uint8_t *)"Testing line");
 		
 		while(1) {	
 
@@ -320,25 +324,42 @@ void ExtBtn3_Config(void){  //**********PC3.***********
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	
+		//Clock wise or counter clock wise
 		if(GPIO_Pin == KEY_BUTTON_PIN)  //GPIO_PIN_0
 		{
 			BSP_LED_Toggle(LED3);
+			if (directionFlag == 0)
+			{
+				directionFlag = 1;
+			}
+			else
+			{
+				directionFlag = 0;
+			}
 		}
 		
-		
+		//Full step or half step
 		if(GPIO_Pin == GPIO_PIN_1)
 		{
 				BSP_LED_Toggle(LED3);
-				
+			if (stepFlag == 0)
+			{
+				stepFlag = 1;
+			}
+			else
+			{
+				stepFlag = 0;
+			}
 			
 		}  //end of PIN_1
 
+		//Speed up stepper motor
 		if(GPIO_Pin == GPIO_PIN_2) {
 			BSP_LED_Toggle(LED3);
 				
 		} //end of if PIN_2	
 		
+		//Slow down stepper motor
 		if(GPIO_Pin == GPIO_PIN_3)
 		{
 			BSP_LED_Toggle(LED3);
@@ -359,7 +380,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
 				
-	BSP_LED_Toggle(LED3);
+	//BSP_LED_Toggle(LED3);
 	//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 	__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 
