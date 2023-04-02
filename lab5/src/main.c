@@ -34,12 +34,29 @@ TIM_HandleTypeDef Tim3_Handle;
 TIM_OC_InitTypeDef Tim3_OCInitStructure;
 uint16_t Tim3_PrescalerValue;
 uint16_t Tim3_CCR = 65535;
+float stepTime = 1; //0.77083;
 
 //Flag declaration
 uint8_t directionFlag = 0; //0 corresponds to clockwise and 1 corresponds to counter clockwise
 uint8_t stepFlag = 0; //0 corresponds to full stepping and 1 corresponds to half stepping
-uint8_t stepCounter = 0; //Counts the number of steps completed, there are 96 in total (0-95), if full stepping the step count increments by 2
+int8_t stepCounter = 0; //Counts the number of steps completed, there are 96 in total (0-95), if full stepping the step count increments by 2
+uint8_t timerOverflow = 0; //Allows me to keep track when the timer overflows
+uint8_t currentSolenoidStep = 0; //Allos me to keep track of which solenoid should be turned on
 
+//Stepper motor array
+//{A1,B1,A2,B2}
+uint8_t coilArray[8][4] = {
+												{1,0,0,0},
+												{1,1,0,0},
+												{0,1,0,0},
+												{0,1,1,0},
+												{0,0,1,0},
+												{0,0,1,1},
+												{0,0,0,1},
+												{1,0,0,1}
+												};
+uint8_t activeCoil[4];
+												
 int main(void){
 	
 		/* STM32F4xx HAL library initialization:
@@ -88,8 +105,160 @@ int main(void){
 		TIM3_OC_Config();
 		//LCD_DisplayString(10, 3, (uint8_t *)"Testing line");
 		
-		while(1) {	
+		while(1) {
+			HAL_Delay(10);
+			if (timerOverflow == 1)
+			{
+				//Execute motor step
+				
+				currentSolenoidStep = stepCounter %8; //Since there are only 8 options in the array all 96 steps have to be mapped to an element in the array. Steps 0, 8 and 16 are all the same from the perspective of the solenoids
+				
+				switch (currentSolenoidStep) //Select which which solenoid needs to be turned on or off
+				{
+					case 0:
+						activeCoil[0] = coilArray[0][0];
+						activeCoil[1] = coilArray[0][1];
+						activeCoil[2] = coilArray[0][2];
+						activeCoil[3] = coilArray[0][3];
+						break;
+					case 1:
+						activeCoil[0] = coilArray[1][0];
+						activeCoil[1] = coilArray[1][1];
+						activeCoil[2] = coilArray[1][2];
+						activeCoil[3] = coilArray[1][3];
+						break;
+					case 2:
+						activeCoil[0] = coilArray[2][0];
+						activeCoil[1] = coilArray[2][1];
+						activeCoil[2] = coilArray[2][2];
+						activeCoil[3] = coilArray[2][3];
+						break;
+					case 3:
+						activeCoil[0] = coilArray[3][0];
+						activeCoil[1] = coilArray[3][1];
+						activeCoil[2] = coilArray[3][2];
+						activeCoil[3] = coilArray[3][3];
+						break;
+					case 4:
+						activeCoil[0] = coilArray[4][0];
+						activeCoil[1] = coilArray[4][1];
+						activeCoil[2] = coilArray[4][2];
+						activeCoil[3] = coilArray[4][3];
+						break;
+					case 5:
+						activeCoil[0] = coilArray[5][0];
+						activeCoil[1] = coilArray[5][1];
+						activeCoil[2] = coilArray[5][2];
+						activeCoil[3] = coilArray[5][3];
+						break;
+					case 6:
+						activeCoil[0] = coilArray[6][0];
+						activeCoil[1] = coilArray[6][1];
+						activeCoil[2] = coilArray[6][2];
+						activeCoil[3] = coilArray[6][3];
+						break;
+					case 7:
+						activeCoil[0] = coilArray[7][0];
+						activeCoil[1] = coilArray[7][1];
+						activeCoil[2] = coilArray[7][2];
+						activeCoil[3] = coilArray[7][3];
+						break;
+					default:
+						BSP_LED_Toggle(LED4); //Something has gone wrong - signal to operator
+				}
+				
+				//Clear screen
+				BSP_LCD_ClearStringLine(4);
+				BSP_LCD_ClearStringLine(5);
+				BSP_LCD_ClearStringLine(6);
+				BSP_LCD_ClearStringLine(8);
+				//Now that we know shich solenoids need to be turned on or off, set the correct pins on the gpio
+				LCD_DisplayInt(4, 1, activeCoil[0]);
+				LCD_DisplayInt(4, 3, activeCoil[1]);
+				LCD_DisplayInt(4, 5, activeCoil[2]);
+				LCD_DisplayInt(4, 7, activeCoil[3]);
+				LCD_DisplayInt(8, 1, stepCounter);
+				
+				//Update screen display
+				if (stepFlag == 0)
+				{
+					LCD_DisplayString(5, 1,(uint8_t*) "Full Stepping");
+				}
+				else
+				{
+					LCD_DisplayString(5, 1,(uint8_t*) "Half Stepping");
+				}
+				
+				if (directionFlag == 0)
+				{
+					LCD_DisplayString(6, 1,(uint8_t*) "CW");
+				}
+				else
+				{
+					LCD_DisplayString(6, 1,(uint8_t*) "CCW");
+				}
+				
+				
+				
+				//Increment step counter
+				if (stepFlag == 0 && directionFlag == 1) //Full stepping and counter clockwise
+				{
+					//If you're currently at a "half step" go to the nearest full step
+					if (stepCounter %2 == 1)
+					{
+						stepCounter ++;
+					}
+					
+					else
+					{
+						stepCounter +=2;
+					}
+				}
+				
+				else if(stepFlag == 1 && directionFlag == 1) //Half stepping and counter clockwise direction
+				{
+					stepCounter ++;
+				}
+				
+				else if (stepFlag == 0 && directionFlag == 0) //Full stepping and clockwise
+				{
+					//If you're currently at a "half step" go to the nearest full step
+					if (stepCounter %2 == 1)
+					{
+						stepCounter --;
+					}
+					
+					else
+					{
+						stepCounter -=2;
+					}
+				}
+				
+				else if(stepFlag == 1 && directionFlag == 0) //Half stepping and clockwise direction
+				{
+					stepCounter --;
+				}
 
+				
+				
+				//If you've completed a full revolution counter clockwise, reset the step counter
+				if (stepCounter >95 && directionFlag == 1)
+				{
+					stepCounter = 0;
+				}
+				
+				//If you've completed a full revolution clockwise, reset your step counter
+				else if (stepCounter < 0 && directionFlag == 0)
+				{
+					stepCounter += 96; //If you're at -1 you'll end up at 95, if you're at -2 you'll end up at 94
+				}
+				
+				
+				
+				//BSP_LED_Toggle(LED3);
+				//Reset flag
+				timerOverflow = 0;
+			}
 			
 			
 		} // end of while loop
@@ -218,7 +387,7 @@ void TIM3_Config(void)
 {
 	Tim3_Handle.Init.Period = 65535;
 	//Calculates the prescaler value for timer 3. We want the timer to overflow 16 times a second
-	Tim3_PrescalerValue = (uint32_t) (0.77083*SystemCoreClock / ((Tim3_Handle.Init.Period + 1)))-1;
+	Tim3_PrescalerValue = (uint32_t) (stepTime*SystemCoreClock / ((Tim3_Handle.Init.Period + 1)))-1;
 	Tim3_Handle.Instance = TIM3;
 	
 	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
@@ -381,6 +550,10 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_h
 {																																//for timer4 
 				
 	//BSP_LED_Toggle(LED3);
+	
+	//Set flag
+	timerOverflow = 1;
+	
 	//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 	__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 
