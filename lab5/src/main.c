@@ -19,7 +19,9 @@ void LCD_DisplayFloat(uint16_t LineNumber, uint16_t ColumnNumber, float Number, 
 void LEDs_Config(void);
 
 void TIM3_Config(void);
+void TIM3_OC_Config(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim);
 
 void ExtBtn1_Config(void);
 void ExtBtn2_Config(void);
@@ -29,7 +31,11 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 
 TIM_HandleTypeDef Tim3_Handle;
+TIM_OC_InitTypeDef Tim3_OCInitStructure;
 uint16_t Tim3_PrescalerValue;
+uint16_t Tim3_CCR = 65535;
+
+//Flag declaration
 
 int main(void){
 	
@@ -75,6 +81,7 @@ int main(void){
 		
 		//Configuring the timer
 		TIM3_Config();
+		TIM3_OC_Config();
 		LCD_DisplayString(10, 3, (uint8_t *)"Testing line");
 		
 		while(1) {	
@@ -202,12 +209,12 @@ void LEDs_Config(void)
   BSP_LED_Init(LED4);
 }
 
-
+//Used to control time between steps
 void TIM3_Config(void)
 {
 	Tim3_Handle.Init.Period = 65535;
 	//Calculates the prescaler value for timer 3. We want the timer to overflow 16 times a second
-	Tim3_PrescalerValue = (uint32_t) (SystemCoreClock / (16*(Tim3_Handle.Init.Period + 1)))-1;
+	Tim3_PrescalerValue = (uint32_t) (0.77083*SystemCoreClock / ((Tim3_Handle.Init.Period + 1)))-1;
 	Tim3_Handle.Instance = TIM3;
 	
 	Tim3_Handle.Init.Prescaler = Tim3_PrescalerValue;
@@ -227,7 +234,18 @@ void TIM3_Config(void)
     Error_Handler();
   }
 	
-	BSP_LED_Toggle(LED4);
+	//BSP_LED_Toggle(LED4);
+}
+
+void TIM3_OC_Config(void)
+{
+	Tim3_OCInitStructure.OCMode = TIM_OCMODE_TOGGLE;
+	Tim3_OCInitStructure.Pulse = Tim3_CCR;
+	Tim3_OCInitStructure.OCPolarity = TIM_OCPOLARITY_HIGH;
+	
+	HAL_TIM_OC_Init(&Tim3_Handle);
+	HAL_TIM_OC_ConfigChannel(&Tim3_Handle, &Tim3_OCInitStructure, TIM_CHANNEL_2);
+	HAL_TIM_OC_Start_IT(&Tim3_Handle, TIM_CHANNEL_2);
 }
 
 void ExtBtn1_Config(void)     // for GPIO C pin 1
@@ -340,8 +358,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
-				//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
-				__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
+				
+	BSP_LED_Toggle(LED3);
+	//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
+	__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 
 			
 	
