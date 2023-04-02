@@ -27,6 +27,11 @@ void ExtBtn1_Config(void);
 void ExtBtn2_Config(void);
 void ExtBtn3_Config(void);
 
+void A1Solenoid_Config(void);
+void A2Solenoid_Config(void);
+void B1Solenoid_Config(void);
+void B2Solenoid_Config(void);
+
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
@@ -34,7 +39,7 @@ TIM_HandleTypeDef Tim3_Handle;
 TIM_OC_InitTypeDef Tim3_OCInitStructure;
 uint16_t Tim3_PrescalerValue;
 uint16_t Tim3_CCR = 65535;
-float stepTime = 1; //0.77083;
+float stepTime = (2/48.0); //0.77083;
 
 //Flag declaration
 uint8_t directionFlag = 0; //0 corresponds to clockwise and 1 corresponds to counter clockwise
@@ -93,6 +98,12 @@ int main(void){
 			
 		//Initializing the LEDS	
 		LEDs_Config();
+		
+		//Configure GPIOs
+		A1Solenoid_Config();
+		A2Solenoid_Config();
+		B1Solenoid_Config();
+		B2Solenoid_Config();
 		
 		//Configure the buttons
 		BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI); //User button
@@ -172,14 +183,15 @@ int main(void){
 				BSP_LCD_ClearStringLine(5);
 				BSP_LCD_ClearStringLine(6);
 				BSP_LCD_ClearStringLine(8);
-				//Now that we know shich solenoids need to be turned on or off, set the correct pins on the gpio
+				
+				
+				//Update screen display
 				LCD_DisplayInt(4, 1, activeCoil[0]);
 				LCD_DisplayInt(4, 3, activeCoil[1]);
 				LCD_DisplayInt(4, 5, activeCoil[2]);
 				LCD_DisplayInt(4, 7, activeCoil[3]);
 				LCD_DisplayInt(8, 1, stepCounter);
 				
-				//Update screen display
 				if (stepFlag == 0)
 				{
 					LCD_DisplayString(5, 1,(uint8_t*) "Full Stepping");
@@ -198,6 +210,11 @@ int main(void){
 					LCD_DisplayString(6, 1,(uint8_t*) "CCW");
 				}
 				
+				//Now that we know shich solenoids need to be turned on or off, set the correct pins on the gpio
+				(activeCoil[0]) ? HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET) : HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); //Write A1 pin
+				(activeCoil[1]) ? HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET) : HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); //Write A2 pin
+				(activeCoil[2]) ? HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET) : HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET); //Write B1 pin
+				(activeCoil[3]) ? HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET) : HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET); //Write B2 pin
 				
 				
 				//Increment step counter
@@ -240,7 +257,7 @@ int main(void){
 				}
 
 				
-				
+				//Handling overflow
 				//If you've completed a full revolution counter clockwise, reset the step counter
 				if (stepCounter >95 && directionFlag == 1)
 				{
@@ -491,6 +508,51 @@ void ExtBtn3_Config(void){  //**********PC3.***********
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
+
+void A1Solenoid_Config(void) //PB0
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.Pin = GPIO_PIN_0;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); //Write pins low once initialized
+}
+
+void A2Solenoid_Config(void) //PB1
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.Pin = GPIO_PIN_1;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); //Write pins low once initialized
+}
+
+void B1Solenoid_Config(void) //PB2
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.Pin = GPIO_PIN_2;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET); //Write pins low once initialized
+}
+
+void B2Solenoid_Config(void) //PC5
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.Pin = GPIO_PIN_5;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET); //Write pins low once initialized
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 		//Clock wise or counter clock wise
@@ -514,10 +576,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			if (stepFlag == 0)
 			{
 				stepFlag = 1;
+				
+				//Reset the output compare
+				Tim3_CCR = 65536/2;
+				Tim3_OCInitStructure.Pulse = Tim3_CCR;
+				__HAL_TIM_SET_COMPARE(&Tim3_Handle, TIM_CHANNEL_2, Tim3_OCInitStructure.Pulse);
 			}
 			else
 			{
 				stepFlag = 0;
+				Tim3_CCR = 65535;
+				Tim3_OCInitStructure.Pulse = Tim3_CCR;
+				__HAL_TIM_SET_COMPARE(&Tim3_Handle, TIM_CHANNEL_2, Tim3_OCInitStructure.Pulse);
 			}
 			
 		}  //end of PIN_1
@@ -541,7 +611,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if((*htim).Instance==TIM3)
 	{
-		BSP_LED_Toggle(LED4);
+		//BSP_LED_Toggle(LED4);
 	}
 }
 
@@ -549,7 +619,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
 				
-	//BSP_LED_Toggle(LED3);
+	BSP_LED_Toggle(LED4);
 	
 	//Set flag
 	timerOverflow = 1;
