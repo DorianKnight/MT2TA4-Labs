@@ -275,7 +275,45 @@ int main(void){
 				//BSP_LED_Toggle(LED3);
 				//Reset flag
 				timerOverflow = 0;
-			}
+				
+				if(fasterFlag == 1){
+                    // creating a copy varable to not mess any of the other parts of the code 
+					if (period>2){
+						period -=2;
+					}
+					if (steps==0){
+						TIM3_Config();
+						Tim3_CCR = 10000*period/96;
+						TIM3_OC_Config();
+					
+					}
+					else{
+						TIM3 Config();//set the config so it will change the speed of the turning
+						Tim3_CCR= 10000*period/48;
+						TIM3_OC_Config();
+					}			
+                    
+                    			fasterFlag = 0;
+
+               			}
+				if(slowFlag == 1){
+					if (period<200){
+					period +=2;
+						}
+					if (steps==0){
+						TIM3_Config();
+						Tim3_CCR = 10000*period/96;
+						TIM3_OC_Config();
+						
+					}
+					else{
+						TIM3 Config();//set the config so it will change the speed of the turning
+						Tim3_CCR= 10000*period/48;
+						TIM3_OC_Config();
+					}
+					slowFlag = 0;
+				
+				}
 			
 			
 		} // end of while loop
@@ -594,14 +632,30 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		//Speed up stepper motor
 		if(GPIO_Pin == GPIO_PIN_2) {
-			BSP_LED_Toggle(LED3);
-				
+			if (fasterFlag == 0)
+			{
+				fasterFlag = 1;
+			}
+			else
+			{
+				fasterFlag = 0;
+			}
+            	
 		} //end of if PIN_2	
 		
+
 		//Slow down stepper motor
 		if(GPIO_Pin == GPIO_PIN_3)
 		{
-			BSP_LED_Toggle(LED3);
+			if (slowFlag == 0)
+			{
+				slowFlag = 1;
+			}
+			else
+			{
+				slowFlag = 0;
+			}
+            	
 					
 				
 		} //end of if PIN_3
