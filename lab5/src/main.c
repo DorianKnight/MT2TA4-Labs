@@ -122,7 +122,8 @@ int main(void){
 			{
 				//Execute motor step
 				
-				currentSolenoidStep = stepCounter %8; //Since there are only 8 options in the array all 96 steps have to be mapped to an element in the array. Steps 0, 8 and 16 are all the same from the perspective of the solenoids
+				currentSolenoidStep = stepCounter %8; //Since there are only 8 options in the array all 96 steps have to be mapped to an element in the array. 
+																							//Steps 0, 8 and 16 are all the same from the perspective of the solenoids
 				
 				switch (currentSolenoidStep) //Select which which solenoid needs to be turned on or off
 				{
