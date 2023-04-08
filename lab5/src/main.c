@@ -39,7 +39,7 @@ TIM_HandleTypeDef Tim3_Handle;
 TIM_OC_InitTypeDef Tim3_OCInitStructure;
 uint16_t Tim3_PrescalerValue;
 uint16_t Tim3_CCR = 65535;
-float stepTime = (2/48.0); //0.77083;
+float stepTime = (5/48.0); //0.77083;
 
 //Flag declaration
 uint8_t directionFlag = 0; //0 corresponds to clockwise and 1 corresponds to counter clockwise
@@ -47,6 +47,8 @@ uint8_t stepFlag = 0; //0 corresponds to full stepping and 1 corresponds to half
 int8_t stepCounter = 0; //Counts the number of steps completed, there are 96 in total (0-95), if full stepping the step count increments by 2
 uint8_t timerOverflow = 0; //Allows me to keep track when the timer overflows
 uint8_t currentSolenoidStep = 0; //Allos me to keep track of which solenoid should be turned on
+uint8_t repititionFlag = 0;
+uint8_t periodMultiplier = 0;
 
 //Stepper motor array
 //{A1,B1,A2,B2}
@@ -118,7 +120,7 @@ int main(void){
 		
 		while(1) {
 			HAL_Delay(10);
-			if (timerOverflow == 1)
+			if (timerOverflow == 1 && repititionFlag == 0)
 			{
 				//Execute motor step
 				
@@ -183,7 +185,9 @@ int main(void){
 				BSP_LCD_ClearStringLine(4);
 				BSP_LCD_ClearStringLine(5);
 				BSP_LCD_ClearStringLine(6);
+				BSP_LCD_ClearStringLine(7);
 				BSP_LCD_ClearStringLine(8);
+				BSP_LCD_ClearStringLine(9);
 				
 				
 				//Update screen display
@@ -191,7 +195,12 @@ int main(void){
 				LCD_DisplayInt(4, 3, activeCoil[1]);
 				LCD_DisplayInt(4, 5, activeCoil[2]);
 				LCD_DisplayInt(4, 7, activeCoil[3]);
-				LCD_DisplayInt(8, 1, stepCounter);
+				LCD_DisplayString(7, 1, (uint8_t*) "Period:");
+				LCD_DisplayInt(7, 9, stepTime*48*(periodMultiplier+1));
+				LCD_DisplayString(8, 1, (uint8_t*) "Step:");
+				LCD_DisplayInt(8, 7, stepCounter);
+				LCD_DisplayString(9,1, (uint8_t*) "Reps left");
+				LCD_DisplayInt(9, 11, repititionFlag);
 				
 				if (stepFlag == 0)
 				{
@@ -271,52 +280,22 @@ int main(void){
 					stepCounter += 96; //If you're at -1 you'll end up at 95, if you're at -2 you'll end up at 94
 				}
 				
-				
-				
-				//BSP_LED_Toggle(LED3);
-				//Reset flag
-				timerOverflow = 0;
-				
-				if(fasterFlag == 1){
-                    // creating a copy varable to not mess any of the other parts of the code 
-					if (period>2){
-						period -=2;
-					}
-					if (steps==0){
-						TIM3_Config();
-						Tim3_CCR = 10000*period/96;
-						TIM3_OC_Config();
-					
-					}
-					else{
-						TIM3 Config();//set the config so it will change the speed of the turning
-						Tim3_CCR= 10000*period/48;
-						TIM3_OC_Config();
-					}			
-                    
-                    			fasterFlag = 0;
-
-               			}
-				if(slowFlag == 1){
-					if (period<200){
-					period +=2;
-						}
-					if (steps==0){
-						TIM3_Config();
-						Tim3_CCR = 10000*period/96;
-						TIM3_OC_Config();
-						
-					}
-					else{
-						TIM3 Config();//set the config so it will change the speed of the turning
-						Tim3_CCR= 10000*period/48;
-						TIM3_OC_Config();
-					}
-					slowFlag = 0;
-				
-				}
+				//Reset the repitition counter flag
+				repititionFlag = periodMultiplier;
+			}
 			
-			
+			else if (timerOverflow == 1)
+			{
+				BSP_LCD_ClearStringLine(9);
+				LCD_DisplayString(9,1, (uint8_t*) "Reps left");
+				LCD_DisplayInt(9, 11, repititionFlag);
+				repititionFlag --;
+			}
+				
+				
+			//BSP_LED_Toggle(LED3);
+			//Reset flag
+			timerOverflow = 0;			
 		} // end of while loop
 	
 }  //end of main
@@ -633,32 +612,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		//Speed up stepper motor
 		if(GPIO_Pin == GPIO_PIN_2) {
-			if (fasterFlag == 0)
-			{
-				fasterFlag = 1;
-			}
-			else
-			{
-				fasterFlag = 0;
-			}
-            	
+			periodMultiplier ++;
 		} //end of if PIN_2	
 		
 
 		//Slow down stepper motor
 		if(GPIO_Pin == GPIO_PIN_3)
 		{
-			if (slowFlag == 0)
+			if (periodMultiplier >0)
 			{
-				slowFlag = 1;
-			}
-			else
-			{
-				slowFlag = 0;
-			}
-            	
-					
-				
+				periodMultiplier --;
+			}          		
 		} //end of if PIN_3
 }
 
@@ -666,7 +630,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if((*htim).Instance==TIM3)
 	{
-		//BSP_LED_Toggle(LED4);
+		BSP_LED_Toggle(LED3);
 	}
 }
 
